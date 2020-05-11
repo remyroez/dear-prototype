@@ -8,8 +8,18 @@ target_compile_features(dear PRIVATE cxx_std_17)
 target_include_directories(dear PRIVATE include)
 target_link_directories(dear PRIVATE lib)
 
-#target_link_libraries(dear PRIVATE
-#)
+if(WIN32)
+  # TODO
+elseif(ANDROID)
+  # TODO
+elseif(APPLE)
+  # TODO
+elseif(UNIX AND NOT APPLE) # i.e.: Linux
+  target_link_libraries(dear PRIVATE pthread X11 GL m dl asound)
+  target_compile_definitions(dear PRIVATE SOKOL_GLCORE33)
+else()
+  message(FATAL_ERROR "Unsupported platform")
+endif()
 
 if (MSVC)
   set_target_properties(dear PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
