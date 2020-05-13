@@ -1,5 +1,5 @@
-target_sources(App PRIVATE
+target_sources(dear PRIVATE
     main.cpp
 )
 
-#add_subdirectory()
+add_subdirectory(thirdparty)
