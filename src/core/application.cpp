@@ -14,35 +14,35 @@ namespace {
 // init コールバック
 void init(void *userdata) {
     if (auto *app = static_cast<dear::core::application *>(userdata)) {
-        app->init();
+        app->init_cb();
     }
 }
 
 // frame コールバック
 void frame(void *userdata) {
     if (auto *app = static_cast<dear::core::application *>(userdata)) {
-        app->frame();
+        app->frame_cb();
     }
 }
 
 // cleanup コールバック
 void cleanup(void *userdata) {
     if (auto *app = static_cast<dear::core::application *>(userdata)) {
-        app->cleanup();
+        app->cleanup_cb();
     }
 }
 
 // event コールバック
 void event(const sapp_event* ev, void *userdata) {
     if (auto *app = static_cast<dear::core::application *>(userdata)) {
-        app->event(ev);
+        app->event_cb(ev);
     }
 }
 
 // fail コールバック
 void fail(const char *message, void *userdata) {
     if (auto *app = static_cast<dear::core::application *>(userdata)) {
-        app->fail(message);
+        app->fail_cb(message);
     }
 }
 
@@ -60,7 +60,7 @@ application::~application() {
     sargs_shutdown();
 }
 
-void application::configure(sapp_desc &desc) {
+void application::configure_cb(sapp_desc &desc) {
     // デフォルト設定
     desc.user_data = this;
     desc.init_userdata_cb = ::init;
@@ -73,9 +73,12 @@ void application::configure(sapp_desc &desc) {
     desc.gl_force_gles2 = true;
     desc.window_title = "dear";
     desc.ios_keyboard_resizes_canvas = false;
+
+    // ユーザーコールバック
+    configure(desc);
 }
 
-void application::init() {
+void application::init_cb() {
     // gfx
     sg_desc desc = {};
     desc.context = sapp_sgcontext();
@@ -94,14 +97,20 @@ void application::init() {
     _pass_action.colors[0].val[1] = 0.5f;
     _pass_action.colors[0].val[2] = 0.7f;
     _pass_action.colors[0].val[3] = 1.0f;
+
+    // ユーザーコールバック
+    init();
 }
 
-void application::frame() {
+void application::frame_cb() {
     // imgui 新フレーム
     const int width = sapp_width();
     const int height = sapp_height();
     const double delta_time = stm_sec(stm_laptime(&_last_time));
     simgui_new_frame(width, height, delta_time);
+
+    // ユーザーコールバック
+    frame(delta_time);
 
     // 画面クリア
     sg_begin_default_pass(&_pass_action, width, height);
@@ -114,19 +123,31 @@ void application::frame() {
     sg_commit();
 }
 
-void application::cleanup() {
+void application::cleanup_cb() {
     // sokol シャットダウン
     simgui_shutdown();
     sg_shutdown();
+
+    // ユーザーコールバック
+    cleanup();
 }
 
-void application::event(const sapp_event *ev) {
+void application::event_cb(const sapp_event *ev) {
     // imgui ハンドリング
-    simgui_handle_event(ev);
+    if (simgui_handle_event(ev)) {
+        // imgui 側が入力された
+
+    } else {
+        // ユーザーコールバック
+        event(ev);
+    }
 }
 
-void application::fail(const char *message) {
+void application::fail_cb(const char *message) {
     //SOKOL_LOG(message);
+    
+    // ユーザーコールバック
+    fail(message);
 }
 
 } // namespace dear::core

@@ -14,26 +14,48 @@ public:
     // デストラクタ
     virtual ~application();
 
+    // 初期設定コールバック
+    void configure_cb(sapp_desc &desc);
+
+    // 初期化コールバック
+    void init_cb();
+
+    // フレーム経過コールバック
+    void frame_cb();
+
+    // クリーンアップコールバック
+    void cleanup_cb();
+
+    // イベントコールバック
+    void event_cb(const sapp_event *ev);
+
+    // エラーコールバック
+    void fail_cb(const char *message);
+
+protected:
     // 初期設定
-    virtual void configure(sapp_desc &desc);
+    virtual void configure(sapp_desc &desc) {}
 
     // 初期化
-    virtual void init();
+    virtual void init() {}
 
     // フレーム経過
-    virtual void frame();
+    virtual void frame(double delta_time) {}
 
     // クリーンアップ
-    virtual void cleanup();
+    virtual void cleanup() {}
 
     // イベント
-    virtual void event(const sapp_event *ev);
+    virtual void event(const sapp_event *ev) {}
 
     // エラー
-    virtual void fail(const char *message);
+    virtual void fail(const char *message) {}
 
 private:
+    // 前回の時間
     uint64_t _last_time = 0;
+
+    // 描画アクション
     sg_pass_action _pass_action;
 };
 
@@ -43,7 +65,7 @@ private:
 sapp_desc sokol_main(int argc, char* argv[]) { \
     static app _app(argc, argv); \
     sapp_desc desc = {}; \
-    _app.configure(desc); \
+    _app.configure_cb(desc); \
     return desc; \
 }
 
