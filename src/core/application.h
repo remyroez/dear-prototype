@@ -1,8 +1,13 @@
 #ifndef DEAR_CORE_APPLICATION_H_
 #define DEAR_CORE_APPLICATION_H_
 
+#include <vector>
+#include <memory>
+
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+
+#include "applet.h"
 
 namespace dear::core {
 
@@ -32,6 +37,12 @@ public:
     // エラーコールバック
     void fail_cb(const char *message);
 
+    // アプレット登録
+    template <class T, class ...Args>
+    inline void register_applet(Args &&...args) {
+        _applets.emplace_back(std::make_unique<T>(std::forward(args)...));
+    }
+
 protected:
     // 初期設定
     virtual void configure(sapp_desc &desc) {}
@@ -46,7 +57,7 @@ protected:
     virtual void cleanup() {}
 
     // イベント
-    virtual void event(const sapp_event *ev) {}
+    virtual bool event(const sapp_event *ev) { return false; }
 
     // エラー
     virtual void fail(const char *message) {}
@@ -57,6 +68,9 @@ private:
 
     // 描画アクション
     sg_pass_action _pass_action;
+
+    // アプレットリスト
+    std::vector<std::unique_ptr<applet>> _applets;
 };
 
 } // namespace dear::core

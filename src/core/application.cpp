@@ -100,6 +100,11 @@ void application::init_cb() {
 
     // ユーザーコールバック
     init();
+
+    // アプレット初期化
+    for (auto &applet : _applets) {
+        applet->init();
+    }
 }
 
 void application::frame_cb() {
@@ -111,6 +116,11 @@ void application::frame_cb() {
 
     // ユーザーコールバック
     frame(delta_time);
+
+    // アプレット描画
+    for (auto &applet : _applets) {
+        applet->frame(delta_time);
+    }
 
     // 画面クリア
     sg_begin_default_pass(&_pass_action, width, height);
@@ -124,12 +134,17 @@ void application::frame_cb() {
 }
 
 void application::cleanup_cb() {
-    // sokol シャットダウン
-    simgui_shutdown();
-    sg_shutdown();
+    // アプレットクリーンアップ
+    for (auto &applet : _applets) {
+        applet->cleanup();
+    }
 
     // ユーザーコールバック
     cleanup();
+
+    // sokol シャットダウン
+    simgui_shutdown();
+    sg_shutdown();
 }
 
 void application::event_cb(const sapp_event *ev) {
@@ -137,9 +152,14 @@ void application::event_cb(const sapp_event *ev) {
     if (simgui_handle_event(ev)) {
         // imgui 側が入力された
 
-    } else {
+    } else if (event(ev)) {
         // ユーザーコールバック
-        event(ev);
+        
+    } else {
+        // アプレットイベント
+        for (auto &applet : _applets) {
+            if (applet->event(ev)) break;
+        }
     }
 }
 
