@@ -39,7 +39,7 @@ public:
 
     // アプレット登録
     template <class T, class ...Args>
-    inline void register_applet(Args &&...args) {
+    inline void make_applet(Args &&...args) {
         _applets.emplace_back(std::make_unique<T>(std::forward(args)...));
     }
 
