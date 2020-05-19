@@ -50,6 +50,7 @@ public:
 protected:
     // 初期化
     virtual void init() override {
+        set_background_color(0.5f, 0.3f, 0.1f);
         make_applet<example_applet>();
     }
 };

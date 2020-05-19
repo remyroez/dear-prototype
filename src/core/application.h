@@ -37,6 +37,14 @@ public:
     // エラーコールバック
     void fail_cb(const char *message);
 
+    // 背景色の設定
+    void set_background_color(float r, float g, float b, float a = 1.f) {
+        _pass_action.colors[0].val[0] = r;
+        _pass_action.colors[0].val[1] = g;
+        _pass_action.colors[0].val[2] = b;
+        _pass_action.colors[0].val[3] = a;
+    }
+
     // アプレット登録
     template <class T, class ...Args>
     inline void make_applet(Args &&...args) {
