@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <functional>
 
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -51,6 +52,36 @@ public:
         _applets.emplace_back(std::make_unique<T>(std::forward(args)...));
     }
 
+    // 初期化関数型
+    using init_fn = std::function<void()>;
+
+    // フレーム経過関数型
+    using frame_fn = std::function<void(double)>;
+
+    // クリーンアップ関数型
+    using cleanup_fn = std::function<void()>;
+
+    // イベント関数型
+    using event_fn = std::function<bool(const sapp_event *)>;
+
+    // エラー関数型
+    using fail_fn = std::function<void(const char *)>;
+
+    // 初期化コールバックの追加
+    void add_init_callback(init_fn fn) { _init_callbacks.emplace_back(fn); }
+
+    // フレーム経過コールバックの追加
+    void add_frame_callback(frame_fn fn) { _frame_callbacks.emplace_back(fn); }
+
+    // クリーンアップコールバックの追加
+    void add_cleanup_callback(cleanup_fn fn) { _cleanup_callbacks.emplace_back(fn); }
+
+    // イベントコールバックの追加
+    void add_event_callback(event_fn fn) { _event_callbacks.emplace_back(fn); }
+
+    // エラーコールバックの追加
+    void add_fail_callback(fail_fn fn) { _fail_callbacks.emplace_back(fn); }
+
 protected:
     // 初期設定
     virtual void configure(sapp_desc &desc) {}
@@ -79,6 +110,13 @@ private:
 
     // アプレットリスト
     std::vector<std::unique_ptr<applet>> _applets;
+
+    // コールバックリスト
+    std::vector<init_fn> _init_callbacks;
+    std::vector<frame_fn> _frame_callbacks;
+    std::vector<cleanup_fn> _cleanup_callbacks;
+    std::vector<event_fn> _event_callbacks;
+    std::vector<fail_fn> _fail_callbacks;
 };
 
 } // namespace dear::core

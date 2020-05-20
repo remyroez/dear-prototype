@@ -101,6 +101,11 @@ void application::init_cb() {
     // ユーザーコールバック
     init();
 
+    // 登録済みコールバック
+    for (auto &callback : _init_callbacks) {
+        callback();
+    }
+
     // アプレット初期化
     for (auto &applet : _applets) {
         applet->init();
@@ -116,6 +121,11 @@ void application::frame_cb() {
 
     // ユーザーコールバック
     frame(delta_time);
+
+    // 登録済みコールバック
+    for (auto &callback : _frame_callbacks) {
+        callback(delta_time);
+    }
 
     // アプレット描画
     for (auto &applet : _applets) {
@@ -139,6 +149,11 @@ void application::cleanup_cb() {
         applet->cleanup();
     }
 
+    // 登録済みコールバック
+    for (auto &callback : _cleanup_callbacks) {
+        callback();
+    }
+
     // ユーザーコールバック
     cleanup();
 
@@ -156,9 +171,14 @@ void application::event_cb(const sapp_event *ev) {
         // ユーザーコールバック
         
     } else {
+        // 登録済みコールバック
+        for (auto &callback : _event_callbacks) {
+            if (callback(ev)) return;
+        }
+
         // アプレットイベント
         for (auto &applet : _applets) {
-            if (applet->event(ev)) break;
+            if (applet->event(ev)) return;
         }
     }
 }
@@ -166,6 +186,11 @@ void application::event_cb(const sapp_event *ev) {
 void application::fail_cb(const char *message) {
     //SOKOL_LOG(message);
     
+    // 登録済みコールバック
+    for (auto &callback : _fail_callbacks) {
+        callback(message);
+    }
+
     // ユーザーコールバック
     fail(message);
 }
