@@ -15,10 +15,16 @@ namespace dear::core {
 class application {
 public:
     // コンストラクタ
-    application(int argc, char** argv);
+    application();
 
     // デストラクタ
     virtual ~application();
+
+    // セットアップ
+    void setup(int argc, char** argv, sapp_desc &desc);
+
+    // シャットダウン
+    void shutdown();
 
     // 初期設定コールバック
     void configure_cb(sapp_desc &desc);
@@ -123,9 +129,9 @@ private:
 
 #define DEAR_MAIN(app) \
 sapp_desc sokol_main(int argc, char* argv[]) { \
-    static app _app(argc, argv); \
+    static app _app; \
     sapp_desc desc = {}; \
-    _app.configure_cb(desc); \
+    _app.setup(argc, argv, desc); \
     return desc; \
 }
 

@@ -30,13 +30,6 @@ public:
 };
 
 class application : public dear::core::application {
-public:
-    // 基底クラス
-    using super = dear::core::application;
-
-    // コンストラクタ継承
-    using super::application;
-
 protected:
     // 初期化
     virtual void init() override {

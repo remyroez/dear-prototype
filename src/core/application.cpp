@@ -50,13 +50,23 @@ void fail(const char *message, void *userdata) {
 
 namespace dear::core {
 
-application::application(int argc, char** argv) {
-    // 引数のセットアップ
-    sargs_desc desc{ argc, argv };
-    sargs_setup(&desc);
+application::application() {
 }
 
 application::~application() {
+    shutdown();
+}
+
+void application::setup(int argc, char** argv, sapp_desc &desc) {
+    // 引数のセットアップ
+    sargs_desc args{ argc, argv };
+    sargs_setup(&args);
+
+    // 初期設定
+    configure_cb(desc);
+}
+
+void application::shutdown() {
     sargs_shutdown();
 }
 
