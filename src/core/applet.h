@@ -13,6 +13,9 @@ public:
     // デストラクタ
     virtual ~applet() {}
 
+    // 名前
+    virtual const char *name() = 0;
+
     // 初期化
     virtual void init() {}
 

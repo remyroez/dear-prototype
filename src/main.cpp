@@ -5,9 +5,13 @@
 namespace {
 
 class example_applet : public dear::core::applet {
-public:
+    // 名前
+    virtual const char *name() override {
+        return "example";
+    }
+
     // フレーム経過
-    virtual void frame(double delta_time) {
+    virtual void frame(double delta_time) override {
         static bool show_another_window = false;
 
         // 1. Show a simple window
@@ -30,10 +34,21 @@ public:
 };
 
 class application : public dear::core::application {
-protected:
     // 初期化
     virtual void init() override {
         set_background_color(0.5f, 0.3f, 0.1f);
+        add_frame_callback([this](auto){
+            ImGui::Begin("Applets");
+            {
+                if (ImGui::ListBoxHeader("##applets")) {
+                    for (auto &applet : get_applets()) {
+                        ImGui::Text("%s", applet->name());
+                    }
+                    ImGui::ListBoxFooter();
+                }
+            }
+            ImGui::End();
+        });
         add_frame_callback([](auto){ ImGui::ShowDemoWindow(); });
         make_applet<example_applet>();
     }

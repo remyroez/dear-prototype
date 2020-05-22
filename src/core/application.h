@@ -107,6 +107,9 @@ protected:
     // エラー
     virtual void fail(const char *message) {}
 
+    // アプレットを返す
+    auto &get_applets() const { return _applets; }
+
 private:
     // 前回の時間
     uint64_t _last_time = 0;
