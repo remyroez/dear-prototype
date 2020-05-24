@@ -32,6 +32,9 @@ public:
     // 初期化コールバック
     void init_cb();
 
+    // メインメニューコールバック
+    void mainmenu_cb(double dt);
+
     // フレーム経過コールバック
     void frame_cb();
 
@@ -61,6 +64,9 @@ public:
     // 初期化関数型
     using init_fn = std::function<void()>;
 
+    // メインメニュー関数型
+    using mainmenu_fn = std::function<void(double)>;
+
     // フレーム経過関数型
     using frame_fn = std::function<void(double)>;
 
@@ -75,6 +81,9 @@ public:
 
     // 初期化コールバックの追加
     void add_init_callback(init_fn fn) { _init_callbacks.emplace_back(fn); }
+
+    // メインメニューコールバックの追加
+    void add_mainmenu_callback(frame_fn fn) { _mainmenu_callbacks.emplace_back(fn); }
 
     // フレーム経過コールバックの追加
     void add_frame_callback(frame_fn fn) { _frame_callbacks.emplace_back(fn); }
@@ -110,6 +119,9 @@ protected:
     // アプレットを返す
     auto &get_applets() const { return _applets; }
 
+    // メインメニューを持つかどうか返す
+    bool has_mainmenu() const { return _mainmenu_callbacks.size() > 0; }
+
 private:
     // 前回の時間
     uint64_t _last_time = 0;
@@ -122,6 +134,7 @@ private:
 
     // コールバックリスト
     std::vector<init_fn> _init_callbacks;
+    std::vector<mainmenu_fn> _mainmenu_callbacks;
     std::vector<frame_fn> _frame_callbacks;
     std::vector<cleanup_fn> _cleanup_callbacks;
     std::vector<event_fn> _event_callbacks;

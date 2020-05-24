@@ -122,12 +122,29 @@ void application::init_cb() {
     }
 }
 
+void application::mainmenu_cb(double delta_time) {
+    if (!has_mainmenu()) {
+        // メインメニューを持たない
+
+    } else if (ImGui::BeginMainMenuBar()) {
+        // 登録済みコールバック
+        for (auto &callback : _mainmenu_callbacks) {
+            callback(delta_time);
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+}
+
 void application::frame_cb() {
     // imgui 新フレーム
     const int width = sapp_width();
     const int height = sapp_height();
     const double delta_time = stm_sec(stm_laptime(&_last_time));
     simgui_new_frame(width, height, delta_time);
+
+    // メインメニュー
+    mainmenu_cb(delta_time);
 
     // ユーザーコールバック
     frame(delta_time);

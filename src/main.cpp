@@ -37,6 +37,16 @@ class application : public dear::core::application {
     // 初期化
     virtual void init() override {
         set_background_color(0.5f, 0.3f, 0.1f);
+        add_mainmenu_callback([this](auto){
+            if (ImGui::BeginMenu("foo")) {
+                if (ImGui::MenuItem("bar")) {
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("baz")) {
+                }
+                ImGui::EndMenu();
+            }
+        });
         add_frame_callback([this](auto){
             ImGui::Begin("Applets");
             {
