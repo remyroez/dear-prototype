@@ -10,8 +10,13 @@ class example_applet : public dear::core::applet {
         return "example";
     }
 
+    // 初期設定
+    virtual void configure(dear::core::application *app) override {
+        app->add_frame_callback(std::bind(&example_applet::frame, this, std::placeholders::_1));
+    }
+
     // フレーム経過
-    virtual void frame(double delta_time) override {
+    void frame(double delta_time) {
         static bool show_another_window = false;
 
         // 1. Show a simple window
@@ -34,8 +39,8 @@ class example_applet : public dear::core::applet {
 };
 
 class application : public dear::core::application {
-    // 初期化
-    virtual void init() override {
+    // 初期設定
+    virtual void configure(sapp_desc &desc) override {
         set_background_color(0.5f, 0.3f, 0.1f);
         add_mainmenu_callback([this](auto){
             if (ImGui::BeginMenu("foo")) {

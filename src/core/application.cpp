@@ -86,6 +86,11 @@ void application::configure_cb(sapp_desc &desc) {
 
     // ユーザーコールバック
     configure(desc);
+
+    // アプレット初期化
+    for (auto &applet : _applets) {
+        applet->configure(this);
+    }
 }
 
 void application::init_cb() {
@@ -114,11 +119,6 @@ void application::init_cb() {
     // 登録済みコールバック
     for (auto &callback : _init_callbacks) {
         callback();
-    }
-
-    // アプレット初期化
-    for (auto &applet : _applets) {
-        applet->init();
     }
 }
 
@@ -154,11 +154,6 @@ void application::frame_cb() {
         callback(delta_time);
     }
 
-    // アプレット描画
-    for (auto &applet : _applets) {
-        applet->frame(delta_time);
-    }
-
     // 画面クリア
     sg_begin_default_pass(&_pass_action, width, height);
 
@@ -171,11 +166,6 @@ void application::frame_cb() {
 }
 
 void application::cleanup_cb() {
-    // アプレットクリーンアップ
-    for (auto &applet : _applets) {
-        applet->cleanup();
-    }
-
     // 登録済みコールバック
     for (auto &callback : _cleanup_callbacks) {
         callback();
@@ -201,11 +191,6 @@ void application::event_cb(const sapp_event *ev) {
         // 登録済みコールバック
         for (auto &callback : _event_callbacks) {
             if (callback(ev)) return;
-        }
-
-        // アプレットイベント
-        for (auto &applet : _applets) {
-            if (applet->event(ev)) return;
         }
     }
 }
