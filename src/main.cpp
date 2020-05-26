@@ -2,7 +2,40 @@
 
 #include "imgui.h"
 
+#include <unordered_map>
+
 namespace {
+
+class applets_applet : public dear::core::applet {
+    // 名前
+    virtual const char *name() override {
+        return "applets";
+    }
+
+    // 初期設定
+    virtual void configure(dear::core::application *app) override {
+        app->add_frame_callback(std::bind(&applets_applet::frame, this, app, std::placeholders::_1));
+    }
+
+    // フレーム経過
+    void frame(dear::core::application *app, double delta_time) {
+        ImGui::SetNextWindowSize(ImVec2(200, 300), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Applets");
+        {
+            int index = 0;
+            for (auto &applet : app->get_applets()) {
+                if (ImGui::Selectable(applet->name(), index == _selected)) {
+                    _selected = index;
+                }
+                index++;
+            }
+        }
+        ImGui::End();
+    }
+
+    // 選択
+    int _selected = -1;
+};
 
 class example_applet : public dear::core::applet {
     // 名前
@@ -17,8 +50,6 @@ class example_applet : public dear::core::applet {
 
     // フレーム経過
     void frame(double delta_time) {
-        static bool show_another_window = false;
-
         // 1. Show a simple window
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
         static float f = 0.0f;
@@ -36,6 +67,8 @@ class example_applet : public dear::core::applet {
             ImGui::End();
         }
     }
+
+    bool show_another_window = false;
 };
 
 class application : public dear::core::application {
@@ -52,20 +85,9 @@ class application : public dear::core::application {
                 ImGui::EndMenu();
             }
         });
-        add_frame_callback([this](auto){
-            ImGui::Begin("Applets");
-            {
-                if (ImGui::ListBoxHeader("##applets")) {
-                    for (auto &applet : get_applets()) {
-                        ImGui::Text("%s", applet->name());
-                    }
-                    ImGui::ListBoxFooter();
-                }
-            }
-            ImGui::End();
-        });
         add_frame_callback([](auto){ ImGui::ShowDemoWindow(); });
         make_applet<example_applet>();
+        make_applet<applets_applet>();
     }
 };
 

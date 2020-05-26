@@ -97,6 +97,12 @@ public:
     // エラーコールバックの追加
     void add_fail_callback(fail_fn fn) { _fail_callbacks.emplace_back(fn); }
 
+    // アプレットを返す
+    auto &get_applets() const { return _applets; }
+
+    // メインメニューを持つかどうか返す
+    bool has_mainmenu() const { return _mainmenu_callbacks.size() > 0; }
+
 protected:
     // 初期設定
     virtual void configure(sapp_desc &desc) {}
@@ -115,12 +121,6 @@ protected:
 
     // エラー
     virtual void fail(const char *message) {}
-
-    // アプレットを返す
-    auto &get_applets() const { return _applets; }
-
-    // メインメニューを持つかどうか返す
-    bool has_mainmenu() const { return _mainmenu_callbacks.size() > 0; }
 
 private:
     // 前回の時間
