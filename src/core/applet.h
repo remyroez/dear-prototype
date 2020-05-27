@@ -15,8 +15,11 @@ public:
     // 名前
     virtual const char *name() = 0;
 
-    // 初期設定
-    virtual void configure(application *app) {}
+    // インストール
+    virtual void install(application *app) {}
+
+    // アンインストール
+    virtual void uninstall(application *app) {}
 };
 
 } // namespace dear::core

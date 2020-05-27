@@ -89,7 +89,7 @@ void application::configure_cb(sapp_desc &desc) {
 
     // アプレット初期化
     for (auto &applet : _applets) {
-        applet->configure(this);
+        applet->install(this);
     }
 }
 

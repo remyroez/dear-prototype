@@ -12,8 +12,8 @@ class applets_applet : public dear::core::applet {
         return "applets";
     }
 
-    // 初期設定
-    virtual void configure(dear::core::application *app) override {
+    // インストール
+    virtual void install(dear::core::application *app) override {
         app->add_frame_callback(std::bind(&applets_applet::frame, this, app, std::placeholders::_1));
     }
 
@@ -43,8 +43,8 @@ class example_applet : public dear::core::applet {
         return "example";
     }
 
-    // 初期設定
-    virtual void configure(dear::core::application *app) override {
+    // インストール
+    virtual void install(dear::core::application *app) override {
         app->add_frame_callback(std::bind(&example_applet::frame, this, std::placeholders::_1));
     }
 
