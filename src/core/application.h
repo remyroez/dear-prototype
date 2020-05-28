@@ -57,8 +57,8 @@ public:
 
     // アプレット登録
     template <class T, class ...Args>
-    inline void make_applet(Args &&...args) {
-        _applets.emplace_back(std::make_unique<T>(std::forward(args)...));
+    inline std::weak_ptr<applet> make_applet(Args &&...args) {
+        return _applets.emplace_back(std::make_shared<T>(std::forward(args)...));
     }
 
     // 初期化関数型
@@ -130,7 +130,7 @@ private:
     sg_pass_action _pass_action;
 
     // アプレットリスト
-    std::vector<std::unique_ptr<applet>> _applets;
+    std::vector<std::shared_ptr<applet>> _applets;
 
     // コールバックリスト
     std::vector<init_fn> _init_callbacks;
