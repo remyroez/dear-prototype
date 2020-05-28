@@ -166,6 +166,11 @@ void application::frame_cb() {
 }
 
 void application::cleanup_cb() {
+    // アプレット破棄
+    for (auto &applet : _applets) {
+        applet->uninstall(this);
+    }
+
     // 登録済みコールバック
     for (auto &callback : _cleanup_callbacks) {
         callback();
