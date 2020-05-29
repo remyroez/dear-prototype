@@ -5,25 +5,21 @@
 
 namespace dear::core {
 
+class application;
+
 class applet {
 public:
-    // コンストラクタ
-    applet() {}
-
     // デストラクタ
     virtual ~applet() {}
 
-    // 初期化
-    virtual void init() {}
+    // 名前
+    virtual const char *name() = 0;
 
-    // フレーム経過
-    virtual void frame(double delta_time) {}
+    // インストール
+    virtual void install(application *app) {}
 
-    // クリーンアップ
-    virtual void cleanup() {}
-
-    // イベント
-    virtual bool event(const sapp_event *ev) { return false; }
+    // アンインストール
+    virtual void uninstall(application *app) {}
 };
 
 } // namespace dear::core

@@ -50,13 +50,23 @@ void fail(const char *message, void *userdata) {
 
 namespace dear::core {
 
-application::application(int argc, char** argv) {
-    // 引数のセットアップ
-    sargs_desc desc{ argc, argv };
-    sargs_setup(&desc);
+application::application() {
 }
 
 application::~application() {
+    shutdown();
+}
+
+void application::setup(int argc, char** argv, sapp_desc &desc) {
+    // 引数のセットアップ
+    sargs_desc args{ argc, argv };
+    sargs_setup(&args);
+
+    // 初期設定
+    configure_cb(desc);
+}
+
+void application::shutdown() {
     sargs_shutdown();
 }
 
@@ -76,6 +86,11 @@ void application::configure_cb(sapp_desc &desc) {
 
     // ユーザーコールバック
     configure(desc);
+
+    // アプレット初期化
+    for (auto &applet : _applets) {
+        applet->install(this);
+    }
 }
 
 void application::init_cb() {
@@ -101,9 +116,23 @@ void application::init_cb() {
     // ユーザーコールバック
     init();
 
-    // アプレット初期化
-    for (auto &applet : _applets) {
-        applet->init();
+    // 登録済みコールバック
+    for (auto &callback : _init_callbacks) {
+        callback();
+    }
+}
+
+void application::mainmenu_cb(double delta_time) {
+    if (!has_mainmenu()) {
+        // メインメニューを持たない
+
+    } else if (ImGui::BeginMainMenuBar()) {
+        // 登録済みコールバック
+        for (auto &callback : _mainmenu_callbacks) {
+            callback(delta_time);
+        }
+
+        ImGui::EndMainMenuBar();
     }
 }
 
@@ -114,12 +143,15 @@ void application::frame_cb() {
     const double delta_time = stm_sec(stm_laptime(&_last_time));
     simgui_new_frame(width, height, delta_time);
 
+    // メインメニュー
+    mainmenu_cb(delta_time);
+
     // ユーザーコールバック
     frame(delta_time);
 
-    // アプレット描画
-    for (auto &applet : _applets) {
-        applet->frame(delta_time);
+    // 登録済みコールバック
+    for (auto &callback : _frame_callbacks) {
+        callback(delta_time);
     }
 
     // 画面クリア
@@ -134,9 +166,14 @@ void application::frame_cb() {
 }
 
 void application::cleanup_cb() {
-    // アプレットクリーンアップ
+    // アプレット破棄
     for (auto &applet : _applets) {
-        applet->cleanup();
+        applet->uninstall(this);
+    }
+
+    // 登録済みコールバック
+    for (auto &callback : _cleanup_callbacks) {
+        callback();
     }
 
     // ユーザーコールバック
@@ -156,9 +193,9 @@ void application::event_cb(const sapp_event *ev) {
         // ユーザーコールバック
         
     } else {
-        // アプレットイベント
-        for (auto &applet : _applets) {
-            if (applet->event(ev)) break;
+        // 登録済みコールバック
+        for (auto &callback : _event_callbacks) {
+            if (callback(ev)) return;
         }
     }
 }
@@ -166,6 +203,11 @@ void application::event_cb(const sapp_event *ev) {
 void application::fail_cb(const char *message) {
     //SOKOL_LOG(message);
     
+    // 登録済みコールバック
+    for (auto &callback : _fail_callbacks) {
+        callback(message);
+    }
+
     // ユーザーコールバック
     fail(message);
 }
