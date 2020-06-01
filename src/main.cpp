@@ -1,24 +1,23 @@
-#include "core/application.h"
-
+#include "dear.h"
 #include "imgui.h"
 
 #include <unordered_map>
 
 namespace {
 
-class applets_applet : public dear::core::applet {
+class applets_applet : public dear::applet {
     // 名前
     virtual const char *name() override {
         return "applets";
     }
 
     // インストール
-    virtual void install(dear::core::application *app) override {
+    virtual void install(dear::application *app) override {
         app->add_frame_callback(std::bind(&applets_applet::frame, this, app, std::placeholders::_1));
     }
 
     // フレーム経過
-    void frame(dear::core::application *app, double delta_time) {
+    void frame(dear::application *app, double delta_time) {
         ImGui::SetNextWindowSize(ImVec2(200, 300), ImGuiCond_FirstUseEver);
         ImGui::Begin("Applets");
         {
@@ -37,14 +36,14 @@ class applets_applet : public dear::core::applet {
     int _selected = -1;
 };
 
-class example_applet : public dear::core::applet {
+class example_applet : public dear::applet {
     // 名前
     virtual const char *name() override {
         return "example";
     }
 
     // インストール
-    virtual void install(dear::core::application *app) override {
+    virtual void install(dear::application *app) override {
         app->add_frame_callback(std::bind(&example_applet::frame, this, std::placeholders::_1));
     }
 
@@ -71,7 +70,7 @@ class example_applet : public dear::core::applet {
     bool show_another_window = false;
 };
 
-class application : public dear::core::application {
+class application : public dear::application {
     // 初期設定
     virtual void configure(sapp_desc &desc) override {
         set_background_color(0.5f, 0.3f, 0.1f);
