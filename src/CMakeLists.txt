@@ -2,5 +2,5 @@ target_sources(dear PRIVATE
     main.cpp
 )
 
-add_subdirectory(core)
+add_subdirectory(dear)
 add_subdirectory(thirdparty)
