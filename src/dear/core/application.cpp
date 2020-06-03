@@ -2,6 +2,7 @@
 
 #include "sokol_args.h"
 #include "sokol_time.h"
+#include "sokol_fetch.h"
 #include "sokol_glue.h"
 
 #include "imgui.h"
@@ -59,14 +60,23 @@ application::~application() {
 
 void application::setup(int argc, char** argv, sapp_desc &desc) {
     // 引数のセットアップ
-    sargs_desc args{ argc, argv };
-    sargs_setup(&args);
+    {
+        sargs_desc args{ argc, argv };
+        sargs_setup(&args);
+    }
+
+    // フェッチ機能のセットアップ
+    {
+        sfetch_desc_t desc{};
+        sfetch_setup(&desc);
+    }
 
     // 初期設定
     configure_cb(desc);
 }
 
 void application::shutdown() {
+    sfetch_shutdown();
     sargs_shutdown();
 }
 
@@ -137,6 +147,9 @@ void application::mainmenu_cb(double delta_time) {
 }
 
 void application::frame_cb() {
+    // フェッチ更新
+    sfetch_dowork();
+
     // imgui 新フレーム
     const int width = sapp_width();
     const int height = sapp_height();
