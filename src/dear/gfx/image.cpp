@@ -56,7 +56,7 @@ sg_image load_image(const char *filename) {
         desc.min_filter = SG_FILTER_LINEAR;
         desc.mag_filter = SG_FILTER_LINEAR;
         desc.content.subimage[0][0].ptr = data;
-        desc.content.subimage[0][0].size = x * y * c;
+        desc.content.subimage[0][0].size = x * y * channels_in_file;
         sg_init_image(image, &desc);
 
         // ピクセルデータ開放
