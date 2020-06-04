@@ -4,6 +4,8 @@
 #include "core/application.h"
 #include "core/applet.h"
 
+#include "gfx/image.h"
+
 namespace dear {
 
 using application = dear::core::application;

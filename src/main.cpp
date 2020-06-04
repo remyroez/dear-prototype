@@ -88,7 +88,7 @@ class application : public dear::application {
         add_frame_callback([](auto){ ImGui::ShowDemoWindow(); });
         add_frame_callback([this](auto){
             if (ImGui::Begin("image")) {
-                ImGui::Image(reinterpret_cast<ImTextureID>(_image.id), ImVec2(100, 100));
+                ImGui::Image(dear::gfx::id(_image), ImVec2(100, 100));
                 ImGui::End();
             }
         });
@@ -98,32 +98,7 @@ class application : public dear::application {
 
     // 初期化
     virtual void init() override {
-        int x, y, c;
-        if (auto *data = stbi_load("avatar.png", &x, &y, &c, 4)) {
-            sg_image_desc desc{};
-            desc.width = x;
-            desc.height = y;
-            desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-            desc.min_filter = SG_FILTER_LINEAR;
-            desc.mag_filter = SG_FILTER_LINEAR;
-            desc.content.subimage[0][0].ptr = data;
-            desc.content.subimage[0][0].size = x * y * c;
-            _image = sg_alloc_image();
-            sg_init_image(_image, &desc);
-            stbi_image_free(data);
-
-        } else {
-            uint32_t pixels[] = {
-                0xFFFF00FF,
-            };
-            sg_image_desc desc{};
-            desc.width = 1;
-            desc.height = 1;
-            desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-            desc.content.subimage[0][0].ptr = pixels;
-            desc.content.subimage[0][0].size = sizeof(pixels);
-            _image = sg_make_image(&desc);
-        }
+        _image = dear::gfx::load_image("avatar.png");
     }
 
     sg_image _image;
