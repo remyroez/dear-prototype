@@ -68,6 +68,9 @@ void application::setup(int argc, char** argv, sapp_desc &desc) {
     // フェッチ機能のセットアップ
     {
         sfetch_desc_t desc{};
+        //desc.max_requests = 1024;
+        //desc.num_channels = 4;
+        //desc.num_lanes = 8;
         sfetch_setup(&desc);
     }
 

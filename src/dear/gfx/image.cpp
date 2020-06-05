@@ -28,7 +28,7 @@ static std::unordered_map<sfetch_handle_t, sg_image, sfetch_handle_hash> s_fetch
 
 // 読み込みバッファ
 // TODO: ハンドル別に動的確保
-static uint8_t s_file_buffer[256 * 1024];
+static uint8_t s_file_buffer[256 * 1024 * 1024];
 
 // エラー画像へ初期化
 void init_error_image(sg_image image) {
@@ -80,13 +80,20 @@ void init_image(sg_image image, const void *data, int x, int y, int channels_in_
 
 // 画像読み込みコールバック
 void load_cb(const sfetch_response_t *response) {
-    if (auto it = s_fetching_images.find(response->handle); it != s_fetching_images.end()) {
+    if (!response->finished) {
+        // 未完了
+
+    } else if (auto it = s_fetching_images.find(response->handle); it != s_fetching_images.end()) {
         int x, y, channels_in_file;
         int desired_channels = 4;
 
-        if (!response->fetched) {
+        if (response->failed) {
+            // 失敗
             ::init_error_image(it->second);
-            
+
+        } else if (!response->fetched) {
+            // 未フェッチ
+
         } else if (auto *data = stbi_load_from_memory(
             static_cast<const stbi_uc *>(response->buffer_ptr),
             static_cast<int>(response->buffer_size),
@@ -98,6 +105,7 @@ void load_cb(const sfetch_response_t *response) {
             stbi_image_free(data);
 
         } else {
+            // その他
             ::init_error_image(it->second);
         }
 
@@ -137,6 +145,7 @@ sg_image load_image_async(const char *filename) {
     request.callback = ::load_cb;
     request.buffer_ptr = ::s_file_buffer;
     request.buffer_size = sizeof(::s_file_buffer);
+    //request.chunk_size = 1024 * 128;
 
     if (auto handle = sfetch_send(&request); sfetch_handle_valid(handle)) {
         s_fetching_images.emplace(handle, image);
@@ -146,6 +155,22 @@ sg_image load_image_async(const char *filename) {
     }
 
     return image;
+}
+
+// ダミー画像
+sg_image dummy_image() {
+    static sg_image dummy = sg_alloc_image();
+
+    if (!isvalid_image(dummy)) {
+        ::init_error_image(dummy);
+    }
+
+    return dummy;
+}
+
+// 画像のチェック
+bool isvalid_image(sg_image image) {
+    return sg_query_image_state(image) == SG_RESOURCESTATE_VALID;
 }
 
 } // namespace dear::gfx
