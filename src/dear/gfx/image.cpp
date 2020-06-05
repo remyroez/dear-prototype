@@ -4,28 +4,47 @@
 
 #include "stb_image.h"
 
+// フェッチハンドルのマップキー用定義（比較）
 bool operator==(const sfetch_handle_t &a, const sfetch_handle_t &b) {
     return a.id == b.id;
 }
 
+// フェッチハンドルのマップキー用定義（小なり）
 bool operator<(const sfetch_handle_t &a, const sfetch_handle_t &b) {
     return a.id < b.id;
 }
 
 namespace {
 
+// フェッチハンドルのハッシュ化関数型
 struct sfetch_handle_hash {
     auto operator()(const sfetch_handle_t &a) const {
         return std::hash<uint32_t>()(a.id);
     }
 };
 
-static std::unordered_map<sfetch_handle_t, dear::gfx ::load_callback, sfetch_handle_hash> s_load_callback_map;
+// フェッチ中の画像マップ型
+static std::unordered_map<sfetch_handle_t, sg_image, sfetch_handle_hash> s_fetching_images;
 
-} // namespace
+// 読み込みバッファ
+// TODO: ハンドル別に動的確保
+static uint8_t s_file_buffer[256 * 1024];
 
-namespace dear::gfx {
+// エラー画像へ初期化
+void init_error_image(sg_image image) {
+    uint32_t pixels[] = {
+        0xFFFF00FF,
+    };
+    sg_image_desc desc{};
+    desc.width = 1;
+    desc.height = 1;
+    desc.pixel_format = SG_PIXELFORMAT_RGBA8;
+    desc.content.subimage[0][0].ptr = pixels;
+    desc.content.subimage[0][0].size = sizeof(pixels);
+    sg_init_image(image, &desc);
+}
 
+// エラー画像の作成
 sg_image make_error_image() {
     uint32_t pixels[] = {
         0xFFFF00FF,
@@ -39,15 +58,13 @@ sg_image make_error_image() {
     return sg_make_image(&desc);
 }
 
-sg_image load_image(const char *filename) {
-    sg_image image;
+// 画像の初期化
+void init_image(sg_image image, const void *data, int x, int y, int channels_in_file) {
+    if (data == nullptr) {
+        // 読み込み失敗したのでエラー画像を返す
+        init_error_image(image);
 
-    int x, y, channels_in_file;
-    int desired_channels = 4;
-    if (auto *data = stbi_load(filename, &x, &y, &channels_in_file, desired_channels)) {
-        // ID の確保
-        image = sg_alloc_image();
-
+    } else {
         // ピクセルデータから画像生成
         sg_image_desc desc{};
         desc.width = x;
@@ -58,28 +75,77 @@ sg_image load_image(const char *filename) {
         desc.content.subimage[0][0].ptr = data;
         desc.content.subimage[0][0].size = x * y * channels_in_file;
         sg_init_image(image, &desc);
+    }
+}
+
+// 画像読み込みコールバック
+void load_cb(const sfetch_response_t *response) {
+    if (auto it = s_fetching_images.find(response->handle); it != s_fetching_images.end()) {
+        int x, y, channels_in_file;
+        int desired_channels = 4;
+
+        if (!response->fetched) {
+            ::init_error_image(it->second);
+            
+        } else if (auto *data = stbi_load_from_memory(
+            static_cast<const stbi_uc *>(response->buffer_ptr),
+            static_cast<int>(response->buffer_size),
+            &x, &y, &channels_in_file, desired_channels)) {
+            // 画像の作成
+            ::init_image(it->second, data, x, y, channels_in_file);
+
+            // ピクセルデータ開放
+            stbi_image_free(data);
+
+        } else {
+            ::init_error_image(it->second);
+        }
+
+        s_fetching_images.erase(it);
+    }
+}
+
+} // namespace
+
+namespace dear::gfx {
+
+sg_image load_image(const char *filename) {
+    sg_image image = sg_alloc_image();
+
+    int x, y, channels_in_file;
+    int desired_channels = 4;
+    if (auto *data = stbi_load(filename, &x, &y, &channels_in_file, desired_channels)) {
+        // 画像の作成
+        ::init_image(image, data, x, y, channels_in_file);
 
         // ピクセルデータ開放
         stbi_image_free(data);
 
     } else {
         // 読み込み失敗したのでエラー画像を返す
-        image = make_error_image();
+        ::init_error_image(image);
     }
 
     return image;
 }
 
-bool load_image(const char *filename, const load_callback &callback) {
-    bool succeeded = false;
+sg_image load_image_async(const char *filename) {
+    sg_image image = sg_alloc_image();
 
     sfetch_request_t request{};
+    request.path = filename;
+    request.callback = ::load_cb;
+    request.buffer_ptr = ::s_file_buffer;
+    request.buffer_size = sizeof(::s_file_buffer);
+
     if (auto handle = sfetch_send(&request); sfetch_handle_valid(handle)) {
-        s_load_callback_map.emplace(handle, callback);
-        succeeded = true;
+        s_fetching_images.emplace(handle, image);
+
+    } else {
+        ::init_error_image(image);
     }
 
-    return succeeded;
+    return image;
 }
 
 } // namespace dear::gfx

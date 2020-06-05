@@ -98,7 +98,7 @@ class application : public dear::application {
 
     // 初期化
     virtual void init() override {
-        _image = dear::gfx::load_image("avatar.png");
+        _image = dear::gfx::load_image_async("avatar.png");
     }
 
     sg_image _image;
