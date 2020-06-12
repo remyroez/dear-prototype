@@ -39,7 +39,7 @@ struct image {
 };
 
 // 画像の読み込み（同期）
-sg_image load_image(const char *filename);
+image load_image(const char *filename);
 
 // 画像の読み込み（非同期）
 sg_image load_image_async(const char *filename);

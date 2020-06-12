@@ -117,24 +117,30 @@ void load_cb(const sfetch_response_t *response) {
 
 namespace dear::gfx {
 
-sg_image load_image(const char *filename) {
-    sg_image image = sg_alloc_image();
+image load_image(const char *filename) {
+    image result {};
+    result.data = sg_alloc_image();
 
     int x, y, channels_in_file;
     int desired_channels = 4;
     if (auto *data = stbi_load(filename, &x, &y, &channels_in_file, desired_channels)) {
+        // 画像情報の設定
+        result.width = x;
+        result.height = y;
+        result.num_channels = channels_in_file;
+
         // 画像の作成
-        ::init_image(image, data, x, y, channels_in_file);
+        ::init_image(result.data, data, x, y, channels_in_file);
 
         // ピクセルデータ開放
         stbi_image_free(data);
 
     } else {
         // 読み込み失敗したのでエラー画像を返す
-        ::init_error_image(image);
+        ::init_error_image(result.data);
     }
 
-    return image;
+    return result;
 }
 
 sg_image load_image_async(const char *filename) {
