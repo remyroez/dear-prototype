@@ -16,6 +16,8 @@ bool operator<(const sfetch_handle_t &a, const sfetch_handle_t &b) {
 
 namespace {
 
+static const int s_desired_channels = 4;
+
 // フェッチハンドルのハッシュ化関数型
 struct sfetch_handle_hash {
     auto operator()(const sfetch_handle_t &a) const {
@@ -24,58 +26,41 @@ struct sfetch_handle_hash {
 };
 
 // フェッチ中の画像マップ型
-static std::unordered_map<sfetch_handle_t, sg_image, sfetch_handle_hash> s_fetching_images;
+static std::unordered_map<sfetch_handle_t, dear::gfx::image *, sfetch_handle_hash> s_fetching_images;
 
 // 読み込みバッファ
 // TODO: ハンドル別に動的確保
 static uint8_t s_file_buffer[256 * 1024 * 1024];
 
 // エラー画像へ初期化
-void init_error_image(sg_image image) {
-    uint32_t pixels[] = {
-        0xFFFF00FF,
-    };
-    sg_image_desc desc{};
-    desc.width = 1;
-    desc.height = 1;
-    desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    desc.content.subimage[0][0].ptr = pixels;
-    desc.content.subimage[0][0].size = sizeof(pixels);
-    sg_init_image(image, &desc);
-}
+void init_error_image(dear::gfx::image &image) {
+    image.num_channels = 1;
+    image.width = 1;
+    image.height = 1;
 
-// エラー画像の作成
-sg_image make_error_image() {
     uint32_t pixels[] = {
         0xFFFF00FF,
     };
     sg_image_desc desc{};
-    desc.width = 1;
-    desc.height = 1;
+    desc.width = image.width;
+    desc.height = image.height;
     desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     desc.content.subimage[0][0].ptr = pixels;
     desc.content.subimage[0][0].size = sizeof(pixels);
-    return sg_make_image(&desc);
+    sg_init_image(image.data, &desc);
 }
 
 // 画像の初期化
-void init_image(sg_image image, const void *data, int x, int y, int channels_in_file) {
-    if (data == nullptr) {
-        // 読み込み失敗したのでエラー画像を返す
-        init_error_image(image);
-
-    } else {
-        // ピクセルデータから画像生成
-        sg_image_desc desc{};
-        desc.width = x;
-        desc.height = y;
-        desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-        desc.min_filter = SG_FILTER_LINEAR;
-        desc.mag_filter = SG_FILTER_LINEAR;
-        desc.content.subimage[0][0].ptr = data;
-        desc.content.subimage[0][0].size = x * y * channels_in_file;
-        sg_init_image(image, &desc);
-    }
+void init_image(dear::gfx::image &image, const void *data) {
+    sg_image_desc desc{};
+    desc.width = image.width;
+    desc.height = image.height;
+    desc.pixel_format = SG_PIXELFORMAT_RGBA8;
+    desc.min_filter = SG_FILTER_LINEAR;
+    desc.mag_filter = SG_FILTER_LINEAR;
+    desc.content.subimage[0][0].ptr = data;
+    desc.content.subimage[0][0].size = image.width * image.height * image.num_channels;
+    sg_init_image(image.data, &desc);
 }
 
 // 画像読み込みコールバック
@@ -84,12 +69,13 @@ void load_cb(const sfetch_response_t *response) {
         // 未完了
 
     } else if (auto it = s_fetching_images.find(response->handle); it != s_fetching_images.end()) {
-        int x, y, channels_in_file;
-        int desired_channels = 4;
+        auto &img = *it->second;
+
+        const int desired_channels = 4;
 
         if (response->failed) {
             // 失敗
-            ::init_error_image(it->second);
+            ::init_error_image(img);
 
         } else if (!response->fetched) {
             // 未フェッチ
@@ -97,16 +83,17 @@ void load_cb(const sfetch_response_t *response) {
         } else if (auto *data = stbi_load_from_memory(
             static_cast<const stbi_uc *>(response->buffer_ptr),
             static_cast<int>(response->buffer_size),
-            &x, &y, &channels_in_file, desired_channels)) {
+            &img.width, &img.height, &img.num_channels, s_desired_channels)
+        ) {
             // 画像の作成
-            ::init_image(it->second, data, x, y, channels_in_file);
+            ::init_image(img, data);
 
             // ピクセルデータ開放
             stbi_image_free(data);
 
         } else {
             // その他
-            ::init_error_image(it->second);
+            ::init_error_image(img);
         }
 
         s_fetching_images.erase(it);
@@ -117,29 +104,36 @@ void load_cb(const sfetch_response_t *response) {
 
 namespace dear::gfx {
 
-sg_image load_image(const char *filename) {
-    sg_image image = sg_alloc_image();
+bool load_image(const char *filename, image &img) {
+    bool succeeded = false;
 
-    int x, y, channels_in_file;
-    int desired_channels = 4;
-    if (auto *data = stbi_load(filename, &x, &y, &channels_in_file, desired_channels)) {
+    // 画像IDの確保
+    img.data = sg_alloc_image();
+
+    if (auto *data = stbi_load(filename, &img.width, &img.height, &img.num_channels, s_desired_channels)) {
         // 画像の作成
-        ::init_image(image, data, x, y, channels_in_file);
+        ::init_image(img, data);
 
         // ピクセルデータ開放
         stbi_image_free(data);
 
+        succeeded = true;
+
     } else {
         // 読み込み失敗したのでエラー画像を返す
-        ::init_error_image(image);
+        ::init_error_image(img);
     }
 
-    return image;
+    return succeeded;
 }
 
-sg_image load_image_async(const char *filename) {
-    sg_image image = sg_alloc_image();
+bool load_image_async(const char *filename, image &img) {
+    bool succeeded = false;
 
+    // 画像IDの確保
+    img.data = sg_alloc_image();
+
+    // リクエスト
     sfetch_request_t request{};
     request.path = filename;
     request.callback = ::load_cb;
@@ -148,29 +142,29 @@ sg_image load_image_async(const char *filename) {
     //request.chunk_size = 1024 * 128;
 
     if (auto handle = sfetch_send(&request); sfetch_handle_valid(handle)) {
-        s_fetching_images.emplace(handle, image);
+        s_fetching_images.emplace(handle, &img);
+        succeeded = true;
 
     } else {
-        ::init_error_image(image);
+        ::init_error_image(img);
     }
 
-    return image;
+    return succeeded;
 }
 
 // ダミー画像
-sg_image dummy_image() {
-    static sg_image dummy = sg_alloc_image();
+const image &image::dummy() {
+    static image dummy;
+    
+    if (dummy.data.id == SG_INVALID_ID) {
+        dummy.data = sg_alloc_image();
+    }
 
-    if (!isvalid_image(dummy)) {
+    if (!dummy) {
         ::init_error_image(dummy);
     }
 
     return dummy;
-}
-
-// 画像のチェック
-bool isvalid_image(sg_image image) {
-    return sg_query_image_state(image) == SG_RESOURCESTATE_VALID;
 }
 
 } // namespace dear::gfx

@@ -9,19 +9,11 @@
 
 namespace dear::gfx {
 
-// 画像のチェック
-bool isvalid_image(sg_image image);
-
-// ダミー画像
-sg_image dummy_image();
-
-// sg_image を ImTextureID に変換
-inline ImTextureID id(const sg_image &image) {
-    return reinterpret_cast<ImTextureID>((isvalid_image(image) ? image : dummy_image()).id);
-}
-
 // 画像情報
 struct image {
+    // ダミー
+    static const image &dummy();
+
     // 幅
     int width = 0;
 
@@ -35,14 +27,17 @@ struct image {
     sg_image data { SG_INVALID_ID };
 
     // 変換
-    operator ImTextureID() const { return dear::gfx::id(data); }
+    operator ImTextureID() const { return reinterpret_cast<ImTextureID>((static_cast<bool>(*this) ? data.id : image::dummy().data.id)); }
+
+    // 有効判定
+    operator bool() const { return sg_query_image_state(data) == SG_RESOURCESTATE_VALID; }
 };
 
 // 画像の読み込み（同期）
-sg_image load_image(const char *filename);
+bool load_image(const char *filename, image &img);
 
 // 画像の読み込み（非同期）
-sg_image load_image_async(const char *filename);
+bool load_image_async(const char *filename, image &img);
 
 } // namespace dear::gfx
 
