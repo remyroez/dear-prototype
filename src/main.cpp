@@ -1,5 +1,6 @@
 #include "dear.h"
 #include "imgui.h"
+#include "stb_image.h"
 
 #include <unordered_map>
 
@@ -19,8 +20,7 @@ class applets_applet : public dear::applet {
     // フレーム経過
     void frame(dear::application *app, double delta_time) {
         ImGui::SetNextWindowSize(ImVec2(200, 300), ImGuiCond_FirstUseEver);
-        ImGui::Begin("Applets");
-        {
+        if (ImGui::Begin("Applets")) {
             int index = 0;
             for (auto &applet : app->get_applets()) {
                 if (ImGui::Selectable(applet->name(), index == _selected)) {
@@ -85,9 +85,32 @@ class application : public dear::application {
             }
         });
         add_frame_callback([](auto){ ImGui::ShowDemoWindow(); });
+        add_frame_callback([this](auto){
+            if (ImGui::Begin("image")) {
+                ImGui::Text("width: %d", _image.width);
+                ImGui::Text("height: %d", _image.height);
+                ImGui::Text("channels: %d", _image.num_channels);
+                ImGui::Image(
+                    _image,
+                    ImVec2(100, 100),
+                    ImVec2(0.25f, 0.25f),
+                    ImVec2(0.75f, 0.75f),
+                    ImVec4(1.0f, 0.75f, 0.5f, 0.25f),
+                    ImVec4(1.f, 1.f, 1.f, 1.f)
+                );
+            }
+            ImGui::End();
+        });
         make_applet<example_applet>();
         make_applet<applets_applet>();
     }
+
+    // 初期化
+    virtual void init() override {
+        dear::gfx::load_image_async("avatar.png", _image);
+    }
+
+    dear::gfx::image _image;
 };
 
 } // namespace
