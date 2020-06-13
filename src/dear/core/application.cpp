@@ -117,6 +117,7 @@ void application::init_cb() {
 
     // imgui
     simgui_desc_t simgui_desc = {};
+    configure_imgui(simgui_desc);
     simgui_setup(&simgui_desc);
 
     // 初期カラー
