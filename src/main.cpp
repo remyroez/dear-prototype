@@ -115,27 +115,8 @@ class application : public dear::application {
 
     // 初期化
     virtual void init() override {
-        ImGuiIO& io = ImGui::GetIO();
-        io.Fonts->AddFontFromFileTTF("NotoSansCJKjp-Regular.otf", 16, nullptr, io.Fonts->GetGlyphRangesJapanese());
-
-        unsigned char* font_pixels;
-        int font_width, font_height;
-        io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-
-        sg_image_desc img_desc;
-        memset(&img_desc, 0, sizeof(img_desc));
-        img_desc.width = font_width;
-        img_desc.height = font_height;
-        img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-        img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-        img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-        img_desc.min_filter = SG_FILTER_LINEAR;
-        img_desc.mag_filter = SG_FILTER_LINEAR;
-        img_desc.content.subimage[0][0].ptr = font_pixels;
-        img_desc.content.subimage[0][0].size = font_width * font_height * sizeof(uint32_t);
-        img_desc.label = "noto-font";
-        auto img = sg_make_image(&img_desc);
-        io.Fonts->TexID = (ImTextureID)(uintptr_t) img.id;
+        dear::core::load_font("NotoSansCJKjp-Regular.otf", 16);
+        dear::core::build_font();
 
         dear::gfx::load_image_async("avatar.png", _image);
     }

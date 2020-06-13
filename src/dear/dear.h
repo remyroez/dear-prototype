@@ -3,6 +3,7 @@
 
 #include "core/application.h"
 #include "core/applet.h"
+#include "core/font.h"
 
 #include "gfx/image.h"
 
