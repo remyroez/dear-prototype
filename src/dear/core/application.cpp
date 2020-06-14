@@ -119,6 +119,10 @@ void application::init_cb() {
     simgui_desc_t simgui_desc = {};
     configure_imgui(simgui_desc);
     simgui_setup(&simgui_desc);
+    {
+        auto &io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    }
 
     // 初期カラー
     _pass_action.colors[0].action = SG_ACTION_CLEAR;
