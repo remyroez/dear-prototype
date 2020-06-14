@@ -115,13 +115,13 @@ class application : public dear::application {
 
     // 初期化
     virtual void init() override {
-        dear::core::load_font("NotoSansCJKjp-Regular.otf", 16);
-        dear::core::build_font();
+        dear::gfx::load_font("NotoSansCJKjp-Regular.otf", 16);
+        dear::gfx::build_font();
 
         dear::gfx::load_image_async("avatar.png", _image);
     }
 
-    dear::gfx::image _image;
+    dear::image _image;
 };
 
 } // namespace

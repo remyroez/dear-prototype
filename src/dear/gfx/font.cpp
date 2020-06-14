@@ -540,7 +540,7 @@ const ImWchar* get_glyph_ranges() {
 
 } // namespace
 
-namespace dear::core {
+namespace dear::gfx {
 
 bool load_font(const char *filename, float size_pixels) {
     ImGuiIO& io = ImGui::GetIO();
