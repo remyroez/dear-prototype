@@ -74,6 +74,15 @@ class example_applet : public dear::applet {
 };
 
 class application : public dear::application {
+    // 背景サイズ
+    enum background_size {
+        fixed,
+        fit,
+        cover,
+        contain,
+    };
+    background_size _size = background_size::contain;
+
     // 初期設定
     virtual void configure(sapp_desc &desc) override {
         desc.enable_clipboard = true;
@@ -81,18 +90,50 @@ class application : public dear::application {
 
         set_background_color(0.5f, 0.3f, 0.1f);
         add_background_callback([this](auto) {
-            ImGui::Image(
-                _image,
-                ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight())
-            );
+            const auto width = ImGui::GetWindowWidth();
+            const auto height = ImGui::GetWindowHeight();
+            const auto iw = static_cast<float>(_image.width > 0 ? _image.width : 1);
+            const auto ih = static_cast<float>(_image.height > 0 ? _image.height : 1);
+            const auto aspect_w = (width / height);
+            const auto aspect_h = (height / width);
+            const auto aspect_iw = (iw / ih);
+            const auto aspect_ih = (ih / iw);
+            const auto ratio_w = (iw / width);
+            const auto ratio_h = (ih / height);
+            ImVec2 uv0(0.f, 0.f);
+            ImVec2 uv1(1.f, 1.f);
+            switch (_size) {
+            case background_size::fixed:
+                uv1.x = width / iw;
+                uv1.y = height / ih;
+                break;
+            case background_size::fit:
+                uv1.x = 1.f;
+                uv1.y = 1.f;
+                break;
+            case background_size::cover:
+                uv1.x = width / iw;
+                uv1.y = height / ih;
+                break;
+            case background_size::contain:
+                if (aspect_w > aspect_iw) {
+                    uv1.x = ratio_h / ratio_w;
+                    uv1.y = 1.f;
+
+                } else {
+                    uv1.x = 1.f;
+                    uv1.y = ratio_w / ratio_h;
+                }
+                break;
+            }
+            ImGui::Image(_image, ImVec2(width, height), uv0, uv1);
         });
         add_mainmenu_callback([this](auto){
-            if (ImGui::BeginMenu("foo")) {
-                if (ImGui::MenuItem("bar")) {
-                }
-                ImGui::Separator();
-                if (ImGui::MenuItem("baz")) {
-                }
+            if (ImGui::BeginMenu("background-size")) {
+                if (ImGui::MenuItem("fixed", nullptr, _size == background_size::fixed)) _size = background_size::fixed;
+                if (ImGui::MenuItem("fit", nullptr, _size == background_size::fit)) _size = background_size::fit;
+                if (ImGui::MenuItem("cover", nullptr, _size == background_size::cover)) _size = background_size::cover;
+                if (ImGui::MenuItem("contain", nullptr, _size == background_size::contain)) _size = background_size::contain;
                 ImGui::EndMenu();
             }
         });
@@ -127,7 +168,7 @@ class application : public dear::application {
         dear::gfx::load_font("NotoSansCJKjp-Regular.otf", 16);
         dear::gfx::build_font();
 
-        dear::gfx::load_image_async("avatar.png", _image);
+        dear::gfx::load_image_async("bbb.png", _image);
     }
 
     dear::image _image;

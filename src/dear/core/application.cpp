@@ -51,9 +51,7 @@ void fail(const char *message, void *userdata) {
 bool begin_background() {
     const auto windowflags =
         ImGuiWindowFlags_NoDocking
-        | ImGuiWindowFlags_NoTitleBar
-        | ImGuiWindowFlags_NoCollapse
-        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoDecoration
         | ImGuiWindowFlags_NoMove
         | ImGuiWindowFlags_NoBringToFrontOnFocus
         | ImGuiWindowFlags_NoNavFocus
