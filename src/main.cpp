@@ -80,6 +80,12 @@ class application : public dear::application {
         desc.clipboard_size = 1024 * 1024;
 
         set_background_color(0.5f, 0.3f, 0.1f);
+        add_background_callback([this](auto) {
+            ImGui::Image(
+                _image,
+                ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight())
+            );
+        });
         add_mainmenu_callback([this](auto){
             if (ImGui::BeginMenu("foo")) {
                 if (ImGui::MenuItem("bar")) {
