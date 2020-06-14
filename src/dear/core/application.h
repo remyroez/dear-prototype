@@ -7,6 +7,7 @@
 
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_imgui.h"
 
 #include "applet.h"
 
@@ -106,6 +107,9 @@ public:
 protected:
     // 初期設定
     virtual void configure(sapp_desc &desc) {}
+
+    // 初期設定 (imgui)
+    virtual void configure_imgui(simgui_desc_t &desc) {}
 
     // 初期化
     virtual void init() {}

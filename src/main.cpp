@@ -73,6 +73,9 @@ class example_applet : public dear::applet {
 class application : public dear::application {
     // 初期設定
     virtual void configure(sapp_desc &desc) override {
+        desc.enable_clipboard = true;
+        desc.clipboard_size = 1024 * 1024;
+
         set_background_color(0.5f, 0.3f, 0.1f);
         add_mainmenu_callback([this](auto){
             if (ImGui::BeginMenu("foo")) {
@@ -105,12 +108,20 @@ class application : public dear::application {
         make_applet<applets_applet>();
     }
 
+    // 初期設定 (imgui)
+    virtual void configure_imgui(simgui_desc_t &desc) override {
+        desc.no_default_font = true;
+    }
+
     // 初期化
     virtual void init() override {
+        dear::gfx::load_font("NotoSansCJKjp-Regular.otf", 16);
+        dear::gfx::build_font();
+
         dear::gfx::load_image_async("avatar.png", _image);
     }
 
-    dear::gfx::image _image;
+    dear::image _image;
 };
 
 } // namespace
