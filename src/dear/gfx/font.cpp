@@ -548,6 +548,14 @@ bool load_font(const char *filename, float size_pixels) {
     return font != nullptr;
 }
 
+bool merge_font(const char *filename, float size_pixels) {
+    ImGuiIO& io = ImGui::GetIO();
+	ImFontConfig config;
+	config.MergeMode = true;
+    auto *font = io.Fonts->AddFontFromFileTTF(filename, size_pixels, &config, ::get_glyph_ranges());
+    return font != nullptr;
+}
+
 void build_font() {
     ImGuiIO& io = ImGui::GetIO();
 

@@ -6,6 +6,9 @@ namespace dear::gfx {
 // フォント読み込み
 bool load_font(const char *filename, float size_pixels = 16.f);
 
+// フォントマージ読み込み
+bool merge_font(const char *filename, float size_pixels = 16.f);
+
 // フォントのビルド
 void build_font();
 
