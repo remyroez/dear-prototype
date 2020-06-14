@@ -39,6 +39,15 @@ bool load_image(const char *filename, image &img);
 // 画像の読み込み（非同期）
 bool load_image_async(const char *filename, image &img);
 
+// UV 計算 (固定)
+void calc_uvs_fixed(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
+
+// UV 計算 (カバー)
+void calc_uvs_cover(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
+
+// UV 計算 (内包)
+void calc_uvs_contain(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
+
 } // namespace dear::gfx
 
 #endif // DEAR_GFX_IMAGE_H_

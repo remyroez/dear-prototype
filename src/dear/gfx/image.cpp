@@ -167,4 +167,59 @@ const image &image::dummy() {
     return dummy;
 }
 
+void calc_uvs_fixed(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1) {
+    const auto iw = (image_width > 0 ? image_width : 1.f);
+    const auto ih = (image_height > 0 ? image_height : 1.f);
+    uv0.x = 0.f;
+    uv0.y = 0.f;
+    uv1.x = rect_width / iw;
+    uv1.y = rect_height / ih;
+}
+
+void calc_uvs_cover(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1) {
+    const auto width = rect_width;
+    const auto height = rect_height;
+    const auto iw = (image_width > 0 ? image_width : 1.f);
+    const auto ih = (image_height > 0 ? image_height : 1.f);
+    const auto aspect_w = (width / height);
+    const auto aspect_h = (height / width);
+    const auto aspect_iw = (iw / ih);
+    const auto aspect_ih = (ih / iw);
+    const auto ratio_w = (iw / width);
+    const auto ratio_h = (ih / height);
+    uv0.x = 0.f;
+    uv0.y = 0.f;
+    if (aspect_w > aspect_iw) {
+        uv1.x = 1.f;
+        uv1.y = ratio_w / ratio_h;
+
+    } else {
+        uv1.x = ratio_h / ratio_w;
+        uv1.y = 1.f;
+    }
+}
+
+void calc_uvs_contain(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1) {
+    const auto width = rect_width;
+    const auto height = rect_height;
+    const auto iw = (image_width > 0 ? image_width : 1.f);
+    const auto ih = (image_height > 0 ? image_height : 1.f);
+    const auto aspect_w = (width / height);
+    const auto aspect_h = (height / width);
+    const auto aspect_iw = (iw / ih);
+    const auto aspect_ih = (ih / iw);
+    const auto ratio_w = (iw / width);
+    const auto ratio_h = (ih / height);
+    uv0.x = 0.f;
+    uv0.y = 0.f;
+    if (aspect_w > aspect_iw) {
+        uv1.x = ratio_h / ratio_w;
+        uv1.y = 1.f;
+
+    } else {
+        uv1.x = 1.f;
+        uv1.y = ratio_w / ratio_h;
+    }
+}
+
 } // namespace dear::gfx
