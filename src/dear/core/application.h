@@ -65,11 +65,14 @@ public:
     // 初期化関数型
     using init_fn = std::function<void()>;
 
-    // メインメニュー関数型
-    using mainmenu_fn = std::function<void(double)>;
-
     // フレーム経過関数型
     using frame_fn = std::function<void(double)>;
+
+    // メインメニュー関数型
+    using mainmenu_fn = frame_fn;
+
+    // 背景関数型
+    using background_fn = frame_fn;
 
     // クリーンアップ関数型
     using cleanup_fn = std::function<void()>;
@@ -84,7 +87,10 @@ public:
     void add_init_callback(init_fn fn) { _init_callbacks.emplace_back(fn); }
 
     // メインメニューコールバックの追加
-    void add_mainmenu_callback(frame_fn fn) { _mainmenu_callbacks.emplace_back(fn); }
+    void add_mainmenu_callback(mainmenu_fn fn) { _mainmenu_callbacks.emplace_back(fn); }
+
+    // 背景コールバックの追加
+    void add_background_callback(background_fn fn) { _background_callbacks.emplace_back(fn); }
 
     // フレーム経過コールバックの追加
     void add_frame_callback(frame_fn fn) { _frame_callbacks.emplace_back(fn); }
@@ -139,6 +145,7 @@ private:
     // コールバックリスト
     std::vector<init_fn> _init_callbacks;
     std::vector<mainmenu_fn> _mainmenu_callbacks;
+    std::vector<background_fn> _background_callbacks;
     std::vector<frame_fn> _frame_callbacks;
     std::vector<cleanup_fn> _cleanup_callbacks;
     std::vector<event_fn> _event_callbacks;
