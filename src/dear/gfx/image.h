@@ -23,6 +23,10 @@ struct image {
     // チャンネル数
     int num_channels = 0;
 
+    // ラップ
+    sg_wrap wrap_u = SG_WRAP_CLAMP_TO_BORDER;
+    sg_wrap wrap_v = SG_WRAP_CLAMP_TO_BORDER;
+
     // 画像
     sg_image data { SG_INVALID_ID };
 

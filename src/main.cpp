@@ -76,13 +76,13 @@ class example_applet : public dear::applet {
 class application : public dear::application {
     // 背景サイズ
     enum background_size {
-        custom,
         fixed,
         fit,
         cover,
         contain,
+        custom,
     };
-    background_size _size = background_size::contain;
+    background_size _size = background_size::fixed;
 
     // 初期設定
     virtual void configure(sapp_desc &desc) override {

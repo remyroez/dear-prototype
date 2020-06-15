@@ -58,6 +58,9 @@ void init_image(dear::gfx::image &image, const void *data) {
     desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     desc.min_filter = SG_FILTER_LINEAR;
     desc.mag_filter = SG_FILTER_LINEAR;
+    desc.wrap_u = image.wrap_u;
+    desc.wrap_v = image.wrap_v;
+    desc.border_color = SG_BORDERCOLOR_TRANSPARENT_BLACK;
     desc.content.subimage[0][0].ptr = data;
     desc.content.subimage[0][0].size = image.width * image.height * image.num_channels;
     sg_init_image(image.data, &desc);
@@ -174,6 +177,10 @@ void calc_uvs_fixed(float image_width, float image_height, float rect_width, flo
     uv0.y = 0.f;
     uv1.x = rect_width / iw;
     uv1.y = rect_height / ih;
+    uv0.x = -(uv1.x - 1.f) * .5f;
+    uv1.x += uv0.x;
+    uv0.y = -(uv1.y - 1.f) * .5f;
+    uv1.y += uv0.y;
 }
 
 void calc_uvs_cover(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1) {
