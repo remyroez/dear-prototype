@@ -192,10 +192,14 @@ void calc_uvs_cover(float image_width, float image_height, float rect_width, flo
     if (aspect_w > aspect_iw) {
         uv1.x = 1.f;
         uv1.y = ratio_w / ratio_h;
+        uv0.y = -(uv1.y - 1.f) * .5f;
+        uv1.y += uv0.y;
 
     } else {
         uv1.x = ratio_h / ratio_w;
         uv1.y = 1.f;
+        uv0.x = -(uv1.x - 1.f) * .5f;
+        uv1.x += uv0.x;
     }
 }
 
@@ -215,10 +219,14 @@ void calc_uvs_contain(float image_width, float image_height, float rect_width, f
     if (aspect_w > aspect_iw) {
         uv1.x = ratio_h / ratio_w;
         uv1.y = 1.f;
+        uv0.x = -(uv1.x - 1.f) * .5f;
+        uv1.x += uv0.x;
 
     } else {
         uv1.x = 1.f;
         uv1.y = ratio_w / ratio_h;
+        uv0.y = -(uv1.y - 1.f) * .5f;
+        uv1.y += uv0.y;
     }
 }
 
