@@ -230,4 +230,25 @@ void calc_uvs_contain(float image_width, float image_height, float rect_width, f
     }
 }
 
+void render_image_fixed(const image &img, const ImVec2 &size) {
+    ImVec2 uv0(0.f, 0.f);
+    ImVec2 uv1(1.f, 1.f);
+    calc_uvs_fixed(img.width, img.height, size.x, size.y, uv0, uv1);
+    ImGui::Image(img, size, uv0, uv1);
+}
+
+void render_image_cover(const image &img, const ImVec2 &size) {
+    ImVec2 uv0(0.f, 0.f);
+    ImVec2 uv1(1.f, 1.f);
+    calc_uvs_cover(img.width, img.height, size.x, size.y, uv0, uv1);
+    ImGui::Image(img, size, uv0, uv1);
+}
+
+void render_image_contain(const image &img, const ImVec2 &size) {
+    ImVec2 uv0(0.f, 0.f);
+    ImVec2 uv1(1.f, 1.f);
+    calc_uvs_contain(img.width, img.height, size.x, size.y, uv0, uv1);
+    ImGui::Image(img, size, uv0, uv1);
+}
+
 } // namespace dear::gfx

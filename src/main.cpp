@@ -76,6 +76,7 @@ class example_applet : public dear::applet {
 class application : public dear::application {
     // 背景サイズ
     enum background_size {
+        custom,
         fixed,
         fit,
         cover,
@@ -90,26 +91,20 @@ class application : public dear::application {
 
         set_background_color(0.5f, 0.3f, 0.1f);
         add_background_callback([this](auto) {
-            const auto width = ImGui::GetWindowWidth();
-            const auto height = ImGui::GetWindowHeight();
-            ImVec2 uv0(0.f, 0.f);
-            ImVec2 uv1(1.f, 1.f);
             switch (_size) {
             case background_size::fixed:
-                dear::gfx::calc_uvs_fixed(_image.width, _image.height, width, height, uv0, uv1);
+                dear::gfx::render_image_fixed(_image, ImGui::GetWindowSize());
                 break;
             case background_size::fit:
-                uv1.x = 1.f;
-                uv1.y = 1.f;
+                ImGui::Image(_image, ImGui::GetWindowSize());
                 break;
             case background_size::cover:
-                dear::gfx::calc_uvs_cover(_image.width, _image.height, width, height, uv0, uv1);
+                dear::gfx::render_image_cover(_image, ImGui::GetWindowSize());
                 break;
             case background_size::contain:
-                dear::gfx::calc_uvs_contain(_image.width, _image.height, width, height, uv0, uv1);
+                dear::gfx::render_image_contain(_image, ImGui::GetWindowSize());
                 break;
             }
-            ImGui::Image(_image, ImVec2(width, height), uv0, uv1);
         });
         add_mainmenu_callback([this](auto){
             if (ImGui::BeginMenu("background-size")) {

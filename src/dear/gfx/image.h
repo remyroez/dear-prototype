@@ -48,6 +48,15 @@ void calc_uvs_cover(float image_width, float image_height, float rect_width, flo
 // UV 計算 (内包)
 void calc_uvs_contain(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
 
+// 画像のレンダリング
+void render_image_fixed(const image &img, const ImVec2 &size);
+
+// 画像のレンダリング (カバー)
+void render_image_cover(const image &img, const ImVec2 &size);
+
+// 画像のレンダリング (内包)
+void render_image_contain(const image &img, const ImVec2 &size);
+
 } // namespace dear::gfx
 
 #endif // DEAR_GFX_IMAGE_H_
