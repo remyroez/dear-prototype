@@ -43,6 +43,9 @@ bool load_image(const char *filename, image &img);
 // 画像の読み込み（非同期）
 bool load_image_async(const char *filename, image &img);
 
+// 画像の破棄
+void unload_image(image &img);
+
 // UV 計算 (固定)
 void calc_uvs_fixed(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
 

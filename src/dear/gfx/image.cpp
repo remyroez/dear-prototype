@@ -155,6 +155,13 @@ bool load_image_async(const char *filename, image &img) {
     return succeeded;
 }
 
+void unload_image(image &img) {
+    if (img) {
+        sg_destroy_image(img.data);
+        img.data.id = SG_INVALID_ID;
+    }
+}
+
 // ダミー画像
 const image &image::dummy() {
     static image dummy;
