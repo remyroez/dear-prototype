@@ -58,6 +58,9 @@ void init_image(dear::gfx::image &image, const void *data) {
     desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     desc.min_filter = SG_FILTER_LINEAR;
     desc.mag_filter = SG_FILTER_LINEAR;
+    desc.wrap_u = image.wrap_u;
+    desc.wrap_v = image.wrap_v;
+    desc.border_color = SG_BORDERCOLOR_TRANSPARENT_BLACK;
     desc.content.subimage[0][0].ptr = data;
     desc.content.subimage[0][0].size = image.width * image.height * image.num_channels;
     sg_init_image(image.data, &desc);
@@ -152,6 +155,13 @@ bool load_image_async(const char *filename, image &img) {
     return succeeded;
 }
 
+void unload_image(image &img) {
+    if (img) {
+        sg_destroy_image(img.data);
+        img.data.id = SG_INVALID_ID;
+    }
+}
+
 // ダミー画像
 const image &image::dummy() {
     static image dummy;
@@ -165,6 +175,94 @@ const image &image::dummy() {
     }
 
     return dummy;
+}
+
+void calc_uvs_fixed(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1) {
+    const auto iw = (image_width > 0 ? image_width : 1.f);
+    const auto ih = (image_height > 0 ? image_height : 1.f);
+    uv0.x = 0.f;
+    uv0.y = 0.f;
+    uv1.x = rect_width / iw;
+    uv1.y = rect_height / ih;
+    uv0.x = -(uv1.x - 1.f) * .5f;
+    uv1.x += uv0.x;
+    uv0.y = -(uv1.y - 1.f) * .5f;
+    uv1.y += uv0.y;
+}
+
+void calc_uvs_cover(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1) {
+    const auto width = rect_width;
+    const auto height = rect_height;
+    const auto iw = (image_width > 0 ? image_width : 1.f);
+    const auto ih = (image_height > 0 ? image_height : 1.f);
+    const auto aspect_w = (width / height);
+    const auto aspect_h = (height / width);
+    const auto aspect_iw = (iw / ih);
+    const auto aspect_ih = (ih / iw);
+    const auto ratio_w = (iw / width);
+    const auto ratio_h = (ih / height);
+    uv0.x = 0.f;
+    uv0.y = 0.f;
+    if (aspect_w > aspect_iw) {
+        uv1.x = 1.f;
+        uv1.y = ratio_w / ratio_h;
+        uv0.y = -(uv1.y - 1.f) * .5f;
+        uv1.y += uv0.y;
+
+    } else {
+        uv1.x = ratio_h / ratio_w;
+        uv1.y = 1.f;
+        uv0.x = -(uv1.x - 1.f) * .5f;
+        uv1.x += uv0.x;
+    }
+}
+
+void calc_uvs_contain(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1) {
+    const auto width = rect_width;
+    const auto height = rect_height;
+    const auto iw = (image_width > 0 ? image_width : 1.f);
+    const auto ih = (image_height > 0 ? image_height : 1.f);
+    const auto aspect_w = (width / height);
+    const auto aspect_h = (height / width);
+    const auto aspect_iw = (iw / ih);
+    const auto aspect_ih = (ih / iw);
+    const auto ratio_w = (iw / width);
+    const auto ratio_h = (ih / height);
+    uv0.x = 0.f;
+    uv0.y = 0.f;
+    if (aspect_w > aspect_iw) {
+        uv1.x = ratio_h / ratio_w;
+        uv1.y = 1.f;
+        uv0.x = -(uv1.x - 1.f) * .5f;
+        uv1.x += uv0.x;
+
+    } else {
+        uv1.x = 1.f;
+        uv1.y = ratio_w / ratio_h;
+        uv0.y = -(uv1.y - 1.f) * .5f;
+        uv1.y += uv0.y;
+    }
+}
+
+void render_image_fixed(const image &img, const ImVec2 &size) {
+    ImVec2 uv0(0.f, 0.f);
+    ImVec2 uv1(1.f, 1.f);
+    calc_uvs_fixed(img.width, img.height, size.x, size.y, uv0, uv1);
+    ImGui::Image(img, size, uv0, uv1);
+}
+
+void render_image_cover(const image &img, const ImVec2 &size) {
+    ImVec2 uv0(0.f, 0.f);
+    ImVec2 uv1(1.f, 1.f);
+    calc_uvs_cover(img.width, img.height, size.x, size.y, uv0, uv1);
+    ImGui::Image(img, size, uv0, uv1);
+}
+
+void render_image_contain(const image &img, const ImVec2 &size) {
+    ImVec2 uv0(0.f, 0.f);
+    ImVec2 uv1(1.f, 1.f);
+    calc_uvs_contain(img.width, img.height, size.x, size.y, uv0, uv1);
+    ImGui::Image(img, size, uv0, uv1);
 }
 
 } // namespace dear::gfx

@@ -47,6 +47,38 @@ void fail(const char *message, void *userdata) {
     }
 }
 
+// 背景の開始
+bool begin_background() {
+    const auto windowflags =
+        ImGuiWindowFlags_NoDocking
+        | ImGuiWindowFlags_NoDecoration
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoBringToFrontOnFocus
+        | ImGuiWindowFlags_NoNavFocus
+        | ImGuiWindowFlags_NoSavedSettings
+        | ImGuiWindowFlags_NoBackground;
+    {
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->GetWorkPos());
+        ImGui::SetNextWindowSize(viewport->GetWorkSize());
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    }
+    auto opened = ImGui::Begin("dear-background-window", nullptr, windowflags);
+    if (opened) {
+        ImGui::PopStyleVar(3);
+        ImGui::DockSpace(ImGui::GetID("dear-background-dockspace"), ImVec2(0, 0), ImGuiDockNodeFlags_PassthruCentralNode);
+    }
+    return opened;
+}
+
+// 背景の終了
+void end_background() {
+    ImGui::End();
+}
+
 } // namespace
 
 namespace dear::core {
@@ -97,6 +129,13 @@ void application::configure_cb(sapp_desc &desc) {
     desc.window_title = "dear";
     desc.ios_keyboard_resizes_canvas = false;
 
+    // 初期カラー
+    _pass_action.colors[0].action = SG_ACTION_CLEAR;
+    _pass_action.colors[0].val[0] = 0.0f;
+    _pass_action.colors[0].val[1] = 0.5f;
+    _pass_action.colors[0].val[2] = 0.7f;
+    _pass_action.colors[0].val[3] = 1.0f;
+
     // ユーザーコールバック
     configure(desc);
 
@@ -119,13 +158,10 @@ void application::init_cb() {
     simgui_desc_t simgui_desc = {};
     configure_imgui(simgui_desc);
     simgui_setup(&simgui_desc);
-
-    // 初期カラー
-    _pass_action.colors[0].action = SG_ACTION_CLEAR;
-    _pass_action.colors[0].val[0] = 0.0f;
-    _pass_action.colors[0].val[1] = 0.5f;
-    _pass_action.colors[0].val[2] = 0.7f;
-    _pass_action.colors[0].val[3] = 1.0f;
+    {
+        auto &io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    }
 
     // ユーザーコールバック
     init();
@@ -162,6 +198,13 @@ void application::frame_cb() {
 
     // メインメニュー
     mainmenu_cb(delta_time);
+
+    // 背景
+    ::begin_background();
+    for (auto &callback : _background_callbacks) {
+        callback(delta_time);
+    }
+    ::end_background();
 
     // ユーザーコールバック
     frame(delta_time);

@@ -23,6 +23,10 @@ struct image {
     // チャンネル数
     int num_channels = 0;
 
+    // ラップ
+    sg_wrap wrap_u = SG_WRAP_CLAMP_TO_BORDER;
+    sg_wrap wrap_v = SG_WRAP_CLAMP_TO_BORDER;
+
     // 画像
     sg_image data { SG_INVALID_ID };
 
@@ -38,6 +42,27 @@ bool load_image(const char *filename, image &img);
 
 // 画像の読み込み（非同期）
 bool load_image_async(const char *filename, image &img);
+
+// 画像の破棄
+void unload_image(image &img);
+
+// UV 計算 (固定)
+void calc_uvs_fixed(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
+
+// UV 計算 (カバー)
+void calc_uvs_cover(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
+
+// UV 計算 (内包)
+void calc_uvs_contain(float image_width, float image_height, float rect_width, float rect_height, ImVec2 &uv0, ImVec2 &uv1);
+
+// 画像のレンダリング
+void render_image_fixed(const image &img, const ImVec2 &size);
+
+// 画像のレンダリング (カバー)
+void render_image_cover(const image &img, const ImVec2 &size);
+
+// 画像のレンダリング (内包)
+void render_image_contain(const image &img, const ImVec2 &size);
 
 } // namespace dear::gfx
 
