@@ -56,9 +56,12 @@ public:
         _pass_action.colors[0].val[3] = a;
     }
 
+    // アプレットハンドル
+    using applet_handle = std::weak_ptr<applet>;
+
     // アプレット登録
     template <class T, class ...Args>
-    inline std::weak_ptr<applet> make_applet(Args &&...args) {
+    inline applet_handle make_applet(Args &&...args) {
         return _applets.emplace_back(std::make_shared<T>(std::forward(args)...));
     }
 
