@@ -1,10 +1,8 @@
 #include "dear.h"
 #include "imgui.h"
-#include "stb_image.h"
 
 #include "applet/background.h"
-
-#include <unordered_map>
+#include "applet/json_editor.h"
 
 namespace {
 
@@ -76,16 +74,6 @@ class example_applet : public dear::applet {
 };
 
 class application : public dear::application {
-    // 背景サイズ
-    enum background_size {
-        fixed,
-        fit,
-        cover,
-        contain,
-        custom,
-    };
-    background_size _size = background_size::fixed;
-
     // 初期設定
     virtual void configure(sapp_desc &desc) override {
         desc.enable_clipboard = true;
@@ -111,6 +99,7 @@ class application : public dear::application {
         make_applet<example_applet>();
         make_applet<applets_applet>();
         background = make_applet<applet::background>();
+        make_applet<applet::json_editor>();
     }
 
     // 初期設定 (imgui)
