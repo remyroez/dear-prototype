@@ -94,9 +94,9 @@ void json_editor::apply_action() {
             ImGui::InputText("name", &name);
         }
 
-        static const char *items[] = { "bool", "float", "int", "string", "object", "array" };
+        static const char *items[] = { "bool", "float", "int", "string", "object", "array", "null" };
         enum class object_type : int {
-            boolean, floating, integer, string, object, array, unknown
+            boolean, floating, integer, string, object, array, null, unknown
         };
         static int object_type_index = static_cast<int>(object_type::unknown);
         if (static_cast<object_type>(object_type_index) == object_type::unknown) {
@@ -123,6 +123,9 @@ void json_editor::apply_action() {
                         
                     } else if (elm.is_array()) {
                         object_type_index = static_cast<int>(object_type::array);
+                        
+                    } else if (elm.is_null()) {
+                        object_type_index = static_cast<int>(object_type::null);
                         
                     } else {
                         object_type_index = 0;
@@ -182,6 +185,9 @@ void json_editor::apply_action() {
                     case object_type::array:
                         json[index] = nlohmann::json::array();
                         break;
+                    case object_type::null:
+                        json[index] = nullptr;
+                        break;
                     }
 
                 } else if (is_object) {
@@ -203,6 +209,9 @@ void json_editor::apply_action() {
                         break;
                     case object_type::array:
                         json[name] = nlohmann::json::array();
+                        break;
+                    case object_type::null:
+                        json[name] = nullptr;
                         break;
                     }
                 }
