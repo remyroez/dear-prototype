@@ -7,12 +7,49 @@
 namespace {
 
 template <typename ... Args>
-std::string format(const std::string& fmt, Args ... args )
-{
-    size_t len = std::snprintf( nullptr, 0, fmt.c_str(), args ... );
+std::string format(const std::string& fmt, Args ... args ) {
+    size_t len = std::snprintf(nullptr, 0, fmt.c_str(), args ...);
     std::vector<char> buf(len + 1);
-    std::snprintf(&buf[0], len + 1, fmt.c_str(), args ... );
+    std::snprintf(&buf[0], len + 1, fmt.c_str(), args ...);
     return std::string(&buf[0], &buf[0] + len);
+}
+
+void clean_json(nlohmann::json &json) {
+    switch (json.type()) {
+    case nlohmann::detail::value_t::null:
+        json = nullptr;
+        break;
+    case nlohmann::detail::value_t::object:
+        for (auto &elm : json) {
+            clean_json(elm);
+        }
+        break;
+    case nlohmann::detail::value_t::array:
+        for (auto &elm : json) {
+            clean_json(elm);
+        }
+        break;
+    case nlohmann::detail::value_t::string:
+        json = nlohmann::json::string_t {};
+        break;
+    case nlohmann::detail::value_t::boolean:
+        json = nlohmann::json::boolean_t {};
+        break;
+    case nlohmann::detail::value_t::number_integer:
+        json = nlohmann::json::number_integer_t {};
+        break;
+    case nlohmann::detail::value_t::number_unsigned:
+        json = nlohmann::json::number_unsigned_t {};
+        break;
+    case nlohmann::detail::value_t::number_float:
+        json = nlohmann::json::number_float_t {};
+        break;
+    case nlohmann::detail::value_t::binary:
+        json = nlohmann::json::binary_t {};
+        break;
+    case nlohmann::detail::value_t::discarded:
+        break;
+    }
 }
 
 } // namespace
@@ -22,20 +59,7 @@ namespace applet {
 void json_editor::install(dear::application *app) {
     app->add_frame_callback(std::bind(&json_editor::frame, this, std::placeholders::_1));
 
-    _json = nlohmann::json::object({
-        {"pi", 3.141},
-        {"happy", true},
-        {"name", "Niels"},
-        {"nothing", nullptr},
-        {"answer", {
-            {"everything", 42}
-        }},
-        {"list", {1, 0, 2}},
-        {"object", {
-            {"currency", "USD"},
-            {"value", 42.99}
-        }}
-    });
+    _json = nlohmann::json::meta();
 }
 
 void json_editor::frame(double delta_time) {
@@ -166,43 +190,50 @@ void json_editor::apply_action() {
             {
                 auto &json = *_current_action.target;
                 if (is_array) {
+                    auto it = json.begin() + index;
                     switch (static_cast<object_type>(object_type_index)) {
                     case object_type::boolean:
-                        json[index] = false;
+                        json.insert(it, nlohmann::json::boolean_t {});
                         break;
                     case object_type::floating:
-                        json[index] = 0.f;
+                        json.insert(it, nlohmann::json::number_float_t {});
                         break;
                     case object_type::integer:
-                        json[index] = 0;
+                        json.insert(it, nlohmann::json::number_integer_t {});
                         break;
                     case object_type::string:
-                        json[index] = "";
+                        json.insert(it, nlohmann::json::string_t {});
                         break;
                     case object_type::object:
-                        json[index] = nlohmann::json::object();
+                        if (json.size() > 0 && json[0].is_object() && index != 0) {
+                            auto inserted_it = json.insert(it, json[0]);
+                            ::clean_json(*inserted_it);
+
+                        } else {
+                            json.insert(it, nlohmann::json::object());
+                        }
                         break;
                     case object_type::array:
-                        json[index] = nlohmann::json::array();
+                        json.insert(it, nlohmann::json::array());
                         break;
                     case object_type::null:
-                        json[index] = nullptr;
+                        json.insert(it, nullptr);
                         break;
                     }
 
                 } else if (is_object) {
                     switch (static_cast<object_type>(object_type_index)) {
                     case object_type::boolean:
-                        json[name] = false;
+                        json[name] = nlohmann::json::boolean_t {};
                         break;
                     case object_type::floating:
-                        json[name] = 0.f;
+                        json[name] = nlohmann::json::number_float_t {};
                         break;
                     case object_type::integer:
-                        json[name] = 0;
+                        json[name] = nlohmann::json::number_integer_t {};
                         break;
                     case object_type::string:
-                        json[name] = "";
+                        json[name] = nlohmann::json::string_t {};
                         break;
                     case object_type::object:
                         json[name] = nlohmann::json::object();
