@@ -29,6 +29,10 @@ class json_editor : public dear::applet {
         enum class mode_t {
             none,
             add,
+            remove,
+            replace,
+            move,
+            copy,
             insert,
             clear,
         };

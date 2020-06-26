@@ -293,7 +293,7 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
     } else if (json.is_string()) {
         begin_leaf(name);
         auto temp = json.get<std::string>();
-        if (ImGui::InputText("##value", &temp)) {
+        if (ImGui::InputTextWithHint("##value", "(empty)", &temp)) {
             json = temp;
         }
         end_leaf();
@@ -332,6 +332,20 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
         end_leaf();
     }
 
+    if (ImGui::BeginPopupContextItem("item context menu"))
+    {
+        if (ImGui::Selectable("add")) result_action.mode = action::mode_t::add;
+        if (ImGui::Selectable("remove")) result_action.mode = action::mode_t::remove;
+        if (ImGui::Selectable("replace")) result_action.mode = action::mode_t::replace;
+        if (ImGui::Selectable("move")) result_action.mode = action::mode_t::move;
+        if (ImGui::Selectable("copy")) result_action.mode = action::mode_t::copy;
+        if (ImGui::Selectable("clear")) result_action.mode = action::mode_t::clear;
+        if (result_action) {
+            result_action.target = &json;
+        }
+        ImGui::EndPopup();
+    }
+
     ImGui::PopID();
 
     return result_action;
@@ -339,6 +353,7 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
 
 void json_editor::begin_leaf(const char *name) {
     ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_SpanFullWidth);
+    ImGui::OpenPopupOnItemClick("item context menu", ImGuiMouseButton_Right);
     ImGui::NextColumn();
     ImGui::SetNextItemWidth(-1);
 }
@@ -350,26 +365,16 @@ void json_editor::end_leaf() {
 bool json_editor::begin_tree(const char *name, const char *text, int size, action &act) {
     ImGui::AlignTextToFramePadding();
     bool node_open = ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_SpanFullWidth);
+    ImGui::OpenPopupOnItemClick("item context menu", ImGuiMouseButton_Right);
     if (size > 0) {
         ImGui::SameLine();
         ImGui::TextDisabled("(%d)", size);
     }
     ImGui::NextColumn();
-
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("%s", text ? text : "unknown");
+    ImGui::TextDisabled("%s", text ? text : "unknown");
     ImGui::SameLine();
-    if (ImGui::Button("add")) {
-        act.mode = action::mode_t::add;
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("insert")) {
-        act.mode = action::mode_t::insert;
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("clear")) {
-        act.mode = action::mode_t::clear;
-    }
+    
     ImGui::NextColumn();
 
     return node_open;
