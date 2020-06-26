@@ -338,7 +338,7 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
 }
 
 void json_editor::begin_leaf(const char *name) {
-    ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen);
+    ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_SpanFullWidth);
     ImGui::NextColumn();
     ImGui::SetNextItemWidth(-1);
 }
@@ -349,7 +349,7 @@ void json_editor::end_leaf() {
 
 bool json_editor::begin_tree(const char *name, const char *text, int size, action &act) {
     ImGui::AlignTextToFramePadding();
-    bool node_open = ImGui::TreeNode(name);
+    bool node_open = ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_SpanFullWidth);
     if (size > 0) {
         ImGui::SameLine();
         ImGui::TextDisabled("(%d)", size);
