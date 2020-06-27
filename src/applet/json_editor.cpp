@@ -4,8 +4,11 @@
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 
+#include "stdio.h"
+
 namespace {
 
+// 文字列のフォーマット
 template <typename ... Args>
 std::string format(const std::string& fmt, Args ... args ) {
     size_t len = std::snprintf(nullptr, 0, fmt.c_str(), args ...);
@@ -14,6 +17,7 @@ std::string format(const std::string& fmt, Args ... args ) {
     return std::string(&buf[0], &buf[0] + len);
 }
 
+// ＪＳＯＮの中身を構造を維持したまま空にする
 void clean_json(nlohmann::json &json) {
     switch (json.type()) {
     case nlohmann::detail::value_t::null:
@@ -52,6 +56,22 @@ void clean_json(nlohmann::json &json) {
     }
 }
 
+// ＪＳＯＮパッチ remove 操作のオブジェクトを作る
+inline nlohmann::json make_remove_op(const nlohmann::json::json_pointer &path) {
+    return { { "op", "remove" }, { "path", path.to_string() } };
+}
+
+// ＪＳＯＮパッチオブジェクトを作る
+template<class... T>
+inline nlohmann::json make_patch(T &&...ops) {
+    return nlohmann::json::array({ std::forward<T>(ops)... });
+}
+
+// ＪＳＯＮパッチの削除操作を実行
+void patch_remove(nlohmann::json &json, const nlohmann::json::json_pointer &pointer) {
+    json = json.patch(make_patch(make_remove_op(pointer)));
+}
+
 } // namespace
 
 namespace applet {
@@ -75,7 +95,7 @@ void json_editor::frame(double delta_time) {
         if (ImGui::BeginChild("json", ImVec2(-1, -1))) {
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2,2));
             ImGui::Columns(2);
-            if (auto act = property("<ROOT>", _json); act && !_current_action) {
+            if (auto act = property("<ROOT>", _json, nlohmann::json::json_pointer()); act && !_current_action) {
                 _current_action = act;
             }
             ImGui::Columns(1);
@@ -98,10 +118,27 @@ void json_editor::apply_action() {
     case action::mode_t::insert:
         ImGui::OpenPopup("New Object");
         break;
+    case action::mode_t::remove:
+        //ImGui::OpenPopup("Object Info");
+        ::patch_remove(_json, _current_action.pointer);
+        _current_action.reset();
+        break;
     case action::mode_t::clear:
         _current_action.target->clear();
         _current_action.reset();
         break;
+    defalut:
+        _current_action.reset();
+        break;
+    }
+
+    if (ImGui::BeginPopupModal("Object Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("%s", _current_action.pointer.to_string().c_str());
+        if (ImGui::Button("ok")) {
+            _current_action.reset();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     if (ImGui::BeginPopupModal("New Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -245,6 +282,31 @@ void json_editor::apply_action() {
                         json[name] = nullptr;
                         break;
                     }
+
+                } else {
+                    switch (static_cast<object_type>(object_type_index)) {
+                    case object_type::boolean:
+                        json = nlohmann::json::boolean_t {};
+                        break;
+                    case object_type::floating:
+                        json = nlohmann::json::number_float_t {};
+                        break;
+                    case object_type::integer:
+                        json = nlohmann::json::number_integer_t {};
+                        break;
+                    case object_type::string:
+                        json = nlohmann::json::string_t {};
+                        break;
+                    case object_type::object:
+                        json = nlohmann::json::object();
+                        break;
+                    case object_type::array:
+                        json = nlohmann::json::array();
+                        break;
+                    case object_type::null:
+                        json = nullptr;
+                        break;
+                    }
                 }
             }
             index = -1;
@@ -257,7 +319,7 @@ void json_editor::apply_action() {
     }
 }
 
-json_editor::action json_editor::property(const char *name, nlohmann::json &json) {
+json_editor::action json_editor::property(const char *name, nlohmann::json &json, nlohmann::json::json_pointer pointer) {
     action result_action;
 
     ImGui::PushID(name);
@@ -302,10 +364,11 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
         auto open = begin_tree(name, "object", json.size(), result_action);
         if (result_action) {
             result_action.target = &json;
+            result_action.pointer = pointer;
         }
         if (open) {
             for (auto it = json.begin(); it != json.end(); ++it) {
-                if (auto child_action = property(it.key().c_str(), it.value()); child_action && !result_action) {
+                if (auto child_action = property(it.key().c_str(), it.value(), pointer / it.key()); child_action && !result_action) {
                     result_action = child_action;
                 }
             }
@@ -316,10 +379,11 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
         auto open = begin_tree(name, "array", json.size(), result_action);
         if (result_action) {
             result_action.target = &json;
+            result_action.pointer = pointer;
         }
         if (open) {
-            for (auto i = 0; i < json.size(); ++i) {
-                if (auto child_action = property(::format("[%d]", i).c_str(), json[i]); child_action && !result_action) {
+            for (std::size_t i = 0; i < json.size(); ++i) {
+                if (auto child_action = property(::format("%d", i).c_str(), json[i], pointer / i); child_action && !result_action) {
                     result_action = child_action;
                 }
             }
@@ -342,6 +406,7 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
         if (ImGui::Selectable("clear")) result_action.mode = action::mode_t::clear;
         if (result_action) {
             result_action.target = &json;
+            result_action.pointer = pointer;
         }
         ImGui::EndPopup();
     }
