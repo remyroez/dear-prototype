@@ -56,6 +56,11 @@ void clean_json(nlohmann::json &json) {
     }
 }
 
+// ＪＳＯＮパッチ add 操作のオブジェクトを作る
+inline nlohmann::json make_add_op(const nlohmann::json::json_pointer &path, const nlohmann::json &value) {
+    return { { "op", "add" }, { "path", path.to_string() }, { "value", value } };
+}
+
 // ＪＳＯＮパッチ remove 操作のオブジェクトを作る
 inline nlohmann::json make_remove_op(const nlohmann::json::json_pointer &path) {
     return { { "op", "remove" }, { "path", path.to_string() } };
@@ -198,6 +203,32 @@ void json_editor::apply_action() {
 
             } else {
                 object_type_index = 0;
+                switch (_current_action.target->type()) {
+                case nlohmann::detail::value_t::null:
+                    object_type_index = static_cast<int>(object_type::null);
+                    break;
+                case nlohmann::detail::value_t::object:
+                    break;
+                case nlohmann::detail::value_t::array:
+                    break;
+                case nlohmann::detail::value_t::string:
+                    object_type_index = static_cast<int>(object_type::string);
+                    break;
+                case nlohmann::detail::value_t::boolean:
+                    object_type_index = static_cast<int>(object_type::boolean);
+                    break;
+                case nlohmann::detail::value_t::number_integer:
+                case nlohmann::detail::value_t::number_unsigned:
+                    object_type_index = static_cast<int>(object_type::integer);
+                    break;
+                case nlohmann::detail::value_t::number_float:
+                    object_type_index = static_cast<int>(object_type::floating);
+                    break;
+                case nlohmann::detail::value_t::binary:
+                    break;
+                case nlohmann::detail::value_t::discarded:
+                    break;
+                }
             }
         }
         if (ImGui::ListBox("object type", &object_type_index, items, IM_ARRAYSIZE(items))) {
@@ -225,89 +256,38 @@ void json_editor::apply_action() {
         }
         if (ok) {
             {
-                auto &json = *_current_action.target;
+                auto pointer = _current_action.pointer;
                 if (is_array) {
-                    auto it = json.begin() + index;
-                    switch (static_cast<object_type>(object_type_index)) {
-                    case object_type::boolean:
-                        json.insert(it, nlohmann::json::boolean_t {});
-                        break;
-                    case object_type::floating:
-                        json.insert(it, nlohmann::json::number_float_t {});
-                        break;
-                    case object_type::integer:
-                        json.insert(it, nlohmann::json::number_integer_t {});
-                        break;
-                    case object_type::string:
-                        json.insert(it, nlohmann::json::string_t {});
-                        break;
-                    case object_type::object:
-                        if (json.size() > 0 && json[0].is_object() && index != 0) {
-                            auto inserted_it = json.insert(it, json[0]);
-                            ::clean_json(*inserted_it);
-
-                        } else {
-                            json.insert(it, nlohmann::json::object());
-                        }
-                        break;
-                    case object_type::array:
-                        json.insert(it, nlohmann::json::array());
-                        break;
-                    case object_type::null:
-                        json.insert(it, nullptr);
-                        break;
-                    }
+                    pointer /= index;
 
                 } else if (is_object) {
-                    switch (static_cast<object_type>(object_type_index)) {
-                    case object_type::boolean:
-                        json[name] = nlohmann::json::boolean_t {};
-                        break;
-                    case object_type::floating:
-                        json[name] = nlohmann::json::number_float_t {};
-                        break;
-                    case object_type::integer:
-                        json[name] = nlohmann::json::number_integer_t {};
-                        break;
-                    case object_type::string:
-                        json[name] = nlohmann::json::string_t {};
-                        break;
-                    case object_type::object:
-                        json[name] = nlohmann::json::object();
-                        break;
-                    case object_type::array:
-                        json[name] = nlohmann::json::array();
-                        break;
-                    case object_type::null:
-                        json[name] = nullptr;
-                        break;
-                    }
-
-                } else {
-                    switch (static_cast<object_type>(object_type_index)) {
-                    case object_type::boolean:
-                        json = nlohmann::json::boolean_t {};
-                        break;
-                    case object_type::floating:
-                        json = nlohmann::json::number_float_t {};
-                        break;
-                    case object_type::integer:
-                        json = nlohmann::json::number_integer_t {};
-                        break;
-                    case object_type::string:
-                        json = nlohmann::json::string_t {};
-                        break;
-                    case object_type::object:
-                        json = nlohmann::json::object();
-                        break;
-                    case object_type::array:
-                        json = nlohmann::json::array();
-                        break;
-                    case object_type::null:
-                        json = nullptr;
-                        break;
-                    }
+                    pointer /= name;
                 }
+                nlohmann::json op;
+                switch (static_cast<object_type>(object_type_index)) {
+                case object_type::boolean:
+                    op = ::make_add_op(pointer, nlohmann::json::boolean_t {});
+                    break;
+                case object_type::floating:
+                    op = ::make_add_op(pointer, nlohmann::json::number_float_t {});
+                    break;
+                case object_type::integer:
+                    op = ::make_add_op(pointer, nlohmann::json::number_integer_t {});
+                    break;
+                case object_type::string:
+                    op = ::make_add_op(pointer, nlohmann::json::string_t {});
+                    break;
+                case object_type::object:
+                    op = ::make_add_op(pointer, nlohmann::json::object());
+                    break;
+                case object_type::array:
+                    op = ::make_add_op(pointer, nlohmann::json::array());
+                    break;
+                case object_type::null:
+                    op = ::make_add_op(pointer, nullptr);
+                    break;
+                }
+                _json = _json.patch(::make_patch(op));
             }
             index = -1;
             name.clear();
