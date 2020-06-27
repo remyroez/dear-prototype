@@ -66,6 +66,11 @@ inline nlohmann::json make_remove_op(const nlohmann::json::json_pointer &path) {
     return { { "op", "remove" }, { "path", path.to_string() } };
 }
 
+// ＪＳＯＮパッチ replace 操作のオブジェクトを作る
+inline nlohmann::json make_replace_op(const nlohmann::json::json_pointer &path, const nlohmann::json &value) {
+    return { { "op", "replace" }, { "path", path.to_string() }, { "value", value } };
+}
+
 // ＪＳＯＮパッチオブジェクトを作る
 template<class... T>
 inline nlohmann::json make_patch(T &&...ops) {
@@ -121,6 +126,7 @@ void json_editor::apply_action() {
     switch (_current_action.mode) {
     case action::mode_t::add:
     case action::mode_t::insert:
+    case action::mode_t::replace:
         ImGui::OpenPopup("New Object");
         break;
     case action::mode_t::remove:
@@ -147,17 +153,23 @@ void json_editor::apply_action() {
     }
 
     if (ImGui::BeginPopupModal("New Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        const auto is_add_op = _current_action.mode == action::mode_t::add;
         const auto is_array = _current_action.target->is_array();
         const auto is_object = _current_action.target->is_object();
 
         static int index = -1;
         static std::string name;
-        if (is_array) {
+        if (is_array && is_add_op) {
             if (index < 0) index = _current_action.target->size();
+            ImGui::Text("%s", (_current_action.pointer / index).to_string().c_str());
             ImGui::SliderInt("index", &index, 0, _current_action.target->size());
 
-        } else if (is_object) {
+        } else if (is_object && is_add_op) {
+            ImGui::Text("%s", (_current_action.pointer / name).to_string().c_str());
             ImGui::InputText("name", &name);
+
+        } else {
+            ImGui::Text("%s", _current_action.pointer.to_string().c_str());
         }
 
         static const char *items[] = { "bool", "float", "int", "string", "object", "array", "null" };
@@ -166,7 +178,7 @@ void json_editor::apply_action() {
         };
         static int object_type_index = static_cast<int>(object_type::unknown);
         if (static_cast<object_type>(object_type_index) == object_type::unknown) {
-            if (is_array) {
+            if (is_add_op && is_array) {
                 if (_current_action.target->size() == 0) {
                     object_type_index = 0;
 
@@ -198,7 +210,7 @@ void json_editor::apply_action() {
                     }
                 }
 
-            } else if (is_object) {
+            } else if (is_add_op && is_object) {
                 object_type_index = 0;
 
             } else {
@@ -208,8 +220,10 @@ void json_editor::apply_action() {
                     object_type_index = static_cast<int>(object_type::null);
                     break;
                 case nlohmann::detail::value_t::object:
+                    object_type_index = static_cast<int>(object_type::object);
                     break;
                 case nlohmann::detail::value_t::array:
+                    object_type_index = static_cast<int>(object_type::array);
                     break;
                 case nlohmann::detail::value_t::string:
                     object_type_index = static_cast<int>(object_type::string);
@@ -234,15 +248,12 @@ void json_editor::apply_action() {
         if (ImGui::ListBox("object type", &object_type_index, items, IM_ARRAYSIZE(items))) {
 
         }
+        auto close = false;
         if (ImGui::Button("cancel")) {
-            index = -1;
-            name.clear();
-            object_type_index = static_cast<int>(object_type::unknown);
-            _current_action.reset();
-            ImGui::CloseCurrentPopup();
+            close = true;
         }
         ImGui::SameLine();
-        if (is_object && name.empty()) {
+        if (is_add_op && is_object && name.empty()) {
             ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
             auto button_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
             button_color.w *= 0.5f;
@@ -250,45 +261,66 @@ void json_editor::apply_action() {
             ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
         }
         auto ok = ImGui::Button("ok");
-        if (is_object && name.empty()) {
+        if (is_add_op && is_object && name.empty()) {
             ImGui::PopItemFlag();
             ImGui::PopStyleColor(2);
         }
         if (ok) {
-            {
-                auto pointer = _current_action.pointer;
-                if (is_array) {
-                    pointer /= index;
+            // ＪＳＯＮポインタ
+            auto pointer = _current_action.pointer;
+            if (!is_add_op) {
+                // replace 操作なら、そのものを指す
 
-                } else if (is_object) {
-                    pointer /= name;
-                }
-                nlohmann::json op;
-                switch (static_cast<object_type>(object_type_index)) {
-                case object_type::boolean:
-                    op = ::make_add_op(pointer, nlohmann::json::boolean_t {});
-                    break;
-                case object_type::floating:
-                    op = ::make_add_op(pointer, nlohmann::json::number_float_t {});
-                    break;
-                case object_type::integer:
-                    op = ::make_add_op(pointer, nlohmann::json::number_integer_t {});
-                    break;
-                case object_type::string:
-                    op = ::make_add_op(pointer, nlohmann::json::string_t {});
-                    break;
-                case object_type::object:
-                    op = ::make_add_op(pointer, nlohmann::json::object());
-                    break;
-                case object_type::array:
-                    op = ::make_add_op(pointer, nlohmann::json::array());
-                    break;
-                case object_type::null:
-                    op = ::make_add_op(pointer, nullptr);
-                    break;
-                }
-                _json = _json.patch(::make_patch(op));
+            } else if (is_array) {
+                pointer /= index;
+
+            } else if (is_object) {
+                pointer /= name;
             }
+
+            // 設定する値
+            nlohmann::json value;
+            switch (static_cast<object_type>(object_type_index)) {
+            case object_type::boolean:
+                value = nlohmann::json::boolean_t {};
+                break;
+            case object_type::floating:
+                value = nlohmann::json::number_float_t {};
+                break;
+            case object_type::integer:
+                value = nlohmann::json::number_integer_t {};
+                break;
+            case object_type::string:
+                value = nlohmann::json::string_t {};
+                break;
+            case object_type::object:
+                value = nlohmann::json::object();
+                break;
+            case object_type::array:
+                value = nlohmann::json::array();
+                break;
+            case object_type::null:
+                value = nullptr;
+                break;
+            }
+
+            // 操作オブジェクト
+            nlohmann::json op;
+            switch (_current_action.mode) {
+            case action::mode_t::add:
+                op = ::make_add_op(pointer, value);
+                break;
+            case action::mode_t::replace:
+                op = ::make_replace_op(pointer, value);
+                break;
+            }
+
+            // ＪＳＯＮパッチとし適用
+            _json = _json.patch(::make_patch(op));
+            
+            close = true;
+        }
+        if (close) {
             index = -1;
             name.clear();
             object_type_index = static_cast<int>(object_type::unknown);
@@ -411,7 +443,7 @@ bool json_editor::begin_tree(const char *name, const char *text, int size, actio
     ImGui::AlignTextToFramePadding();
     bool node_open = ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_SpanFullWidth);
     ImGui::OpenPopupOnItemClick("item context menu", ImGuiMouseButton_Right);
-    if (size > 0) {
+    if (size >= 0) {
         ImGui::SameLine();
         ImGui::TextDisabled("(%d)", size);
     }
