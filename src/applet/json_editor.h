@@ -66,6 +66,9 @@ class json_editor : public dear::applet {
     // プロパティ
     static action property(const char *name, nlohmann::json &json, nlohmann::json::json_pointer pointer);
 
+    // 値
+    static void value(nlohmann::json &json);
+
     // リーフ開始
     static void begin_leaf(const char *name);
 
@@ -73,7 +76,7 @@ class json_editor : public dear::applet {
     static void end_leaf();
 
     // ツリー開始
-    static bool begin_tree(const char *name, const char *text, int size, action &act);
+    static bool begin_tree(const char *name, const char *text, int size);
 
     // ツリー終了
     static void end_tree();

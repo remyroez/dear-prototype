@@ -20,9 +20,6 @@ std::string format(const std::string& fmt, Args ... args ) {
 // ＪＳＯＮの中身を構造を維持したまま空にする
 void clean_json(nlohmann::json &json) {
     switch (json.type()) {
-    case nlohmann::detail::value_t::null:
-        json = nullptr;
-        break;
     case nlohmann::detail::value_t::object:
         for (auto &elm : json) {
             clean_json(elm);
@@ -33,25 +30,8 @@ void clean_json(nlohmann::json &json) {
             clean_json(elm);
         }
         break;
-    case nlohmann::detail::value_t::string:
-        json = nlohmann::json::string_t {};
-        break;
-    case nlohmann::detail::value_t::boolean:
-        json = nlohmann::json::boolean_t {};
-        break;
-    case nlohmann::detail::value_t::number_integer:
-        json = nlohmann::json::number_integer_t {};
-        break;
-    case nlohmann::detail::value_t::number_unsigned:
-        json = nlohmann::json::number_unsigned_t {};
-        break;
-    case nlohmann::detail::value_t::number_float:
-        json = nlohmann::json::number_float_t {};
-        break;
-    case nlohmann::detail::value_t::binary:
-        json = nlohmann::json::binary_t {};
-        break;
-    case nlohmann::detail::value_t::discarded:
+    defalut:
+        json.clear();
         break;
     }
 }
@@ -353,47 +333,8 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
     ImGui::PushID(name);
     ImGui::AlignTextToFramePadding();
 
-    if (json.is_null()) {
-        begin_leaf(name);
-        ImGui::Text("null");
-        end_leaf();
-
-    } else if (json.is_boolean()) {
-        begin_leaf(name);
-        auto &data = json.get_ref<bool &>();
-        ImGui::Checkbox("##value", &data);
-        end_leaf();
-
-    } else if (json.is_number_float()) {
-        begin_leaf(name);
-        auto temp = json.get<float>();
-        if (ImGui::InputFloat("##value", &temp)) {
-            json = temp;
-        }
-        end_leaf();
-
-    } else if (json.is_number_integer()) {
-        begin_leaf(name);
-        auto temp = json.get<int>();
-        if (ImGui::InputInt("##value", &temp)) {
-            json = temp;
-        }
-        end_leaf();
-
-    } else if (json.is_string()) {
-        begin_leaf(name);
-        auto temp = json.get<std::string>();
-        if (ImGui::InputTextWithHint("##value", "(empty)", &temp)) {
-            json = temp;
-        }
-        end_leaf();
-
-    } else if (json.is_object()) {
-        auto open = begin_tree(name, "object", json.size(), result_action);
-        if (result_action) {
-            result_action.pointer = pointer;
-        }
-        if (open) {
+    if (json.is_object()) {
+        if (begin_tree(name, "object", json.size())) {
             for (auto it = json.begin(); it != json.end(); ++it) {
                 if (auto child_action = property(it.key().c_str(), it.value(), pointer / it.key()); child_action && !result_action) {
                     result_action = child_action;
@@ -403,11 +344,7 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
         }
 
     } else if (json.is_array()) {
-        auto open = begin_tree(name, "array", json.size(), result_action);
-        if (result_action) {
-            result_action.pointer = pointer;
-        }
-        if (open) {
+        if (begin_tree(name, "array", json.size())) {
             for (std::size_t i = 0; i < json.size(); ++i) {
                 if (auto child_action = property(::format("%d", i).c_str(), json[i], pointer / i); child_action && !result_action) {
                     result_action = child_action;
@@ -418,11 +355,12 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
 
     } else {
         begin_leaf(name);
-        ImGui::Text("unknown");
+        value(json);
         end_leaf();
     }
 
-    if (ImGui::BeginPopupContextItem("item context menu"))
+    // コンテキストメニュー
+    if (ImGui::BeginPopup("item context menu", ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoSavedSettings))
     {
         if (ImGui::Selectable("add")) result_action.mode = action::mode_t::add;
         if (ImGui::Selectable("remove")) result_action.mode = action::mode_t::remove;
@@ -441,6 +379,59 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
     return result_action;
 }
 
+void json_editor::value(nlohmann::json &json) {
+    if (json.is_null()) {
+        ImGui::Text("null");
+
+    } else if (json.is_boolean()) {
+        auto &data = json.get_ref<bool &>();
+        ImGui::Checkbox("##value", &data);
+
+    } else if (json.is_number_float()) {
+        auto temp = json.get<float>();
+        if (ImGui::InputFloat("##value", &temp)) {
+            json = temp;
+        }
+
+    } else if (json.is_number_integer()) {
+        auto temp = json.get<int>();
+        if (ImGui::InputInt("##value", &temp)) {
+            json = temp;
+        }
+
+    } else if (json.is_string()) {
+        auto temp = json.get<std::string>();
+        if (ImGui::InputTextWithHint("##value", "(empty)", &temp)) {
+            json = temp;
+        }
+
+    } else if (json.is_object()) {
+#if 0
+        for (auto it = json.begin(); it != json.end(); ++it) {
+            if (auto child_action = property(it.key().c_str(), it.value(), pointer / it.key()); child_action && !result_action) {
+                result_action = child_action;
+            }
+        }
+#else
+        ImGui::TextDisabled("object");
+#endif
+
+    } else if (json.is_array()) {
+#if 0
+        for (std::size_t i = 0; i < json.size(); ++i) {
+            if (auto child_action = property(::format("%d", i).c_str(), json[i], pointer / i); child_action && !result_action) {
+                result_action = child_action;
+            }
+        }
+#else
+        ImGui::TextDisabled("array");
+#endif
+
+    } else {
+        ImGui::Text("unknown");
+    }
+}
+
 void json_editor::begin_leaf(const char *name) {
     ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_SpanFullWidth);
     ImGui::OpenPopupOnItemClick("item context menu", ImGuiMouseButton_Right);
@@ -452,7 +443,7 @@ void json_editor::end_leaf() {
     ImGui::NextColumn();
 }
 
-bool json_editor::begin_tree(const char *name, const char *text, int size, action &act) {
+bool json_editor::begin_tree(const char *name, const char *text, int size) {
     ImGui::AlignTextToFramePadding();
     bool node_open = ImGui::TreeNodeEx(name, ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_SpanFullWidth);
     ImGui::OpenPopupOnItemClick("item context menu", ImGuiMouseButton_Right);
@@ -461,10 +452,9 @@ bool json_editor::begin_tree(const char *name, const char *text, int size, actio
         ImGui::TextDisabled("(%d)", size);
     }
     ImGui::NextColumn();
+
     ImGui::AlignTextToFramePadding();
     ImGui::TextDisabled("%s", text ? text : "unknown");
-    ImGui::SameLine();
-    
     ImGui::NextColumn();
 
     return node_open;
