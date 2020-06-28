@@ -107,9 +107,18 @@ void json_editor::apply_action() {
         ::patch_remove(_json, _current_action.pointer);
         _current_action.reset();
         break;
+    case action::mode_t::copy:
+        sapp_set_clipboard_string(_json[_current_action.pointer].dump().c_str());
+        _current_action.reset();
+        break;
+    case action::mode_t::paste:
+        if (auto parsed = nlohmann::json::parse(sapp_get_clipboard_string(), nullptr, false); !parsed.is_discarded()) {
+            _json[_current_action.pointer] = parsed;
+        }
+        _current_action.reset();
+        break;
     case action::mode_t::clear:
-        //_json[_current_action.pointer].clear();
-        clean_json(_json[_current_action.pointer]);
+        _json[_current_action.pointer].clear();
         _current_action.reset();
         break;
     defalut:
@@ -398,11 +407,13 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
     if (ImGui::BeginPopup("item context menu", ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings))
     {
         if (ImGui::Selectable("add")) result_action.mode = action::mode_t::add;
-        if (ImGui::Selectable("remove")) result_action.mode = action::mode_t::remove;
         if (ImGui::Selectable("replace")) result_action.mode = action::mode_t::replace;
-        if (ImGui::Selectable("move")) result_action.mode = action::mode_t::move;
+        //if (ImGui::Selectable("move")) result_action.mode = action::mode_t::move;
         if (ImGui::Selectable("copy")) result_action.mode = action::mode_t::copy;
+        if (ImGui::Selectable("paste")) result_action.mode = action::mode_t::paste;
+        ImGui::Separator();
         if (ImGui::Selectable("clear")) result_action.mode = action::mode_t::clear;
+        if (ImGui::Selectable("remove")) result_action.mode = action::mode_t::remove;
         if (result_action) {
             result_action.pointer = pointer;
         }

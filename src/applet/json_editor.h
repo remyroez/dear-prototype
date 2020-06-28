@@ -33,6 +33,7 @@ class json_editor : public dear::applet {
             replace,
             move,
             copy,
+            paste,
             insert,
             clear,
         };
