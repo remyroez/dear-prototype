@@ -67,7 +67,10 @@ class json_editor : public dear::applet {
     static action property(const char *name, nlohmann::json &json, nlohmann::json::json_pointer pointer);
 
     // 値
-    static void value(nlohmann::json &json);
+    static void value(const char *id, nlohmann::json &json);
+
+    // 値
+    static void value(nlohmann::json &json) { value("##value", json); }
 
     // リーフ開始
     static void begin_leaf(const char *name);
@@ -76,7 +79,7 @@ class json_editor : public dear::applet {
     static void end_leaf();
 
     // ツリー開始
-    static bool begin_tree(const char *name, const char *text, int size);
+    static bool begin_tree(const char *name, nlohmann::json &json);
 
     // ツリー終了
     static void end_tree();
