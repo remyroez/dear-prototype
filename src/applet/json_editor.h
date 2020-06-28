@@ -40,22 +40,18 @@ class json_editor : public dear::applet {
         // モード
         mode_t mode = mode_t::none;
 
-        // 対象のＪＳＯＮオブジェクト
-        nlohmann::json *target = nullptr;
-
         // ＪＳＯＮポインタ
         nlohmann::json::json_pointer pointer;
 
         // リセット
         void reset() {
             mode = mode_t::none;
-            target = nullptr;
+            pointer = nlohmann::json::json_pointer();
         }
 
         // オペレーター: 代入
         action &operator =(const action &other) {
             mode = other.mode;
-            target = other.target;
             pointer = other.pointer;
             return *this;
         }
@@ -63,6 +59,9 @@ class json_editor : public dear::applet {
         // オペレーター: キャスト(bool) … アクションがあるかどうか
         operator bool() const { return mode != mode_t::none; }
     };
+
+    // 新規オブジェクトウィンドウ
+    static void window_new_object(nlohmann::json &json, action &act);
 
     // プロパティ
     static action property(const char *name, nlohmann::json &json, nlohmann::json::json_pointer pointer);

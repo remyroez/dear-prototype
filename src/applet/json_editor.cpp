@@ -121,8 +121,6 @@ void json_editor::frame(double delta_time) {
 }
 
 void json_editor::apply_action() {
-    if (_current_action.target == nullptr) return;
-
     switch (_current_action.mode) {
     case action::mode_t::add:
     case action::mode_t::insert:
@@ -130,18 +128,19 @@ void json_editor::apply_action() {
         ImGui::OpenPopup("New Object");
         break;
     case action::mode_t::remove:
-        //ImGui::OpenPopup("Object Info");
         ::patch_remove(_json, _current_action.pointer);
         _current_action.reset();
         break;
     case action::mode_t::clear:
-        _current_action.target->clear();
+        _json[_current_action.pointer].clear();
         _current_action.reset();
         break;
     defalut:
         _current_action.reset();
         break;
     }
+
+    if (!_current_action) return;
 
     if (ImGui::BeginPopupModal("Object Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("%s", _current_action.pointer.to_string().c_str());
@@ -152,183 +151,200 @@ void json_editor::apply_action() {
         ImGui::EndPopup();
     }
 
-    if (ImGui::BeginPopupModal("New Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        const auto is_add_op = _current_action.mode == action::mode_t::add;
-        const auto is_array = _current_action.target->is_array();
-        const auto is_object = _current_action.target->is_object();
+    window_new_object(_json, _current_action);
+}
 
-        static int index = -1;
-        static std::string name;
-        if (is_array && is_add_op) {
-            if (index < 0) index = _current_action.target->size();
-            ImGui::Text("%s", (_current_action.pointer / index).to_string().c_str());
-            ImGui::SliderInt("index", &index, 0, _current_action.target->size());
+void json_editor::window_new_object(nlohmann::json &json, action &act) {
+    if (!ImGui::BeginPopupModal("New Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
 
-        } else if (is_object && is_add_op) {
-            ImGui::Text("%s", (_current_action.pointer / name).to_string().c_str());
-            ImGui::InputText("name", &name);
+    // ターゲット
+    auto &target = json[act.pointer];
 
-        } else {
-            ImGui::Text("%s", _current_action.pointer.to_string().c_str());
-        }
+    const auto is_add_op = act.mode == action::mode_t::add;
+    const auto is_array = target.is_array();
+    const auto is_object = target.is_object();
 
-        static const char *items[] = { "bool", "float", "int", "string", "object", "array", "null" };
-        enum class object_type : int {
-            boolean, floating, integer, string, object, array, null, unknown
-        };
-        static int object_type_index = static_cast<int>(object_type::unknown);
-        if (static_cast<object_type>(object_type_index) == object_type::unknown) {
-            if (is_add_op && is_array) {
-                if (_current_action.target->size() == 0) {
-                    object_type_index = 0;
+    // 添字（インデックス or キー）
+    static int index = -1;
+    static std::string name;
+    if (is_array && is_add_op) {
+        if (index < 0) index = target.size();
+        ImGui::Text("%s", (act.pointer / index).to_string().c_str());
+        ImGui::SliderInt("index", &index, 0, target.size());
 
-                } else {
-                    auto &elm = (*_current_action.target)[0];
-                    if (elm.is_boolean()) {
-                        object_type_index = static_cast<int>(object_type::boolean);
-                        
-                    } else if (elm.is_number_float()) {
-                        object_type_index = static_cast<int>(object_type::floating);
-                        
-                    } else if (elm.is_number_integer()) {
-                        object_type_index = static_cast<int>(object_type::integer);
-                        
-                    } else if (elm.is_string()) {
-                        object_type_index = static_cast<int>(object_type::string);
-                        
-                    } else if (elm.is_object()) {
-                        object_type_index = static_cast<int>(object_type::object);
-                        
-                    } else if (elm.is_array()) {
-                        object_type_index = static_cast<int>(object_type::array);
-                        
-                    } else if (elm.is_null()) {
-                        object_type_index = static_cast<int>(object_type::null);
-                        
-                    } else {
-                        object_type_index = 0;
-                    }
-                }
+    } else if (is_object && is_add_op) {
+        ImGui::Text("%s", (act.pointer / name).to_string().c_str());
+        ImGui::InputText("name", &name);
 
-            } else if (is_add_op && is_object) {
+    } else {
+        ImGui::Text("%s", act.pointer.to_string().c_str());
+    }
+
+    // オブジェクトタイプ
+    static const char *items[] = { "bool", "float", "int", "string", "object", "array", "null" };
+    enum class object_type : int {
+        boolean, floating, integer, string, object, array, null, unknown
+    };
+    static int object_type_index = static_cast<int>(object_type::unknown);
+    if (static_cast<object_type>(object_type_index) == object_type::unknown) {
+        if (is_add_op && is_array) {
+            if (target.size() == 0) {
                 object_type_index = 0;
 
             } else {
-                object_type_index = 0;
-                switch (_current_action.target->type()) {
-                case nlohmann::detail::value_t::null:
-                    object_type_index = static_cast<int>(object_type::null);
-                    break;
-                case nlohmann::detail::value_t::object:
-                    object_type_index = static_cast<int>(object_type::object);
-                    break;
-                case nlohmann::detail::value_t::array:
-                    object_type_index = static_cast<int>(object_type::array);
-                    break;
-                case nlohmann::detail::value_t::string:
-                    object_type_index = static_cast<int>(object_type::string);
-                    break;
-                case nlohmann::detail::value_t::boolean:
+                auto &elm = target[0];
+                if (elm.is_boolean()) {
                     object_type_index = static_cast<int>(object_type::boolean);
-                    break;
-                case nlohmann::detail::value_t::number_integer:
-                case nlohmann::detail::value_t::number_unsigned:
-                    object_type_index = static_cast<int>(object_type::integer);
-                    break;
-                case nlohmann::detail::value_t::number_float:
+                    
+                } else if (elm.is_number_float()) {
                     object_type_index = static_cast<int>(object_type::floating);
-                    break;
-                case nlohmann::detail::value_t::binary:
-                    break;
-                case nlohmann::detail::value_t::discarded:
-                    break;
+                    
+                } else if (elm.is_number_integer()) {
+                    object_type_index = static_cast<int>(object_type::integer);
+                    
+                } else if (elm.is_string()) {
+                    object_type_index = static_cast<int>(object_type::string);
+                    
+                } else if (elm.is_object()) {
+                    object_type_index = static_cast<int>(object_type::object);
+                    
+                } else if (elm.is_array()) {
+                    object_type_index = static_cast<int>(object_type::array);
+                    
+                } else if (elm.is_null()) {
+                    object_type_index = static_cast<int>(object_type::null);
+                    
+                } else {
+                    object_type_index = 0;
                 }
             }
-        }
-        if (ImGui::ListBox("object type", &object_type_index, items, IM_ARRAYSIZE(items))) {
 
-        }
-        auto close = false;
-        if (ImGui::Button("cancel")) {
-            close = true;
-        }
-        ImGui::SameLine();
-        if (is_add_op && is_object && name.empty()) {
-            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-            auto button_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
-            button_color.w *= 0.5f;
-            ImGui::PushStyleColor(ImGuiCol_Button, button_color);
-            ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-        }
-        auto ok = ImGui::Button("ok");
-        if (is_add_op && is_object && name.empty()) {
-            ImGui::PopItemFlag();
-            ImGui::PopStyleColor(2);
-        }
-        if (ok) {
-            // ＪＳＯＮポインタ
-            auto pointer = _current_action.pointer;
-            if (!is_add_op) {
-                // replace 操作なら、そのものを指す
+        } else if (is_add_op && is_object) {
+            object_type_index = 0;
 
-            } else if (is_array) {
-                pointer /= index;
-
-            } else if (is_object) {
-                pointer /= name;
-            }
-
-            // 設定する値
-            nlohmann::json value;
-            switch (static_cast<object_type>(object_type_index)) {
-            case object_type::boolean:
-                value = nlohmann::json::boolean_t {};
+        } else {
+            object_type_index = 0;
+            switch (target.type()) {
+            case nlohmann::detail::value_t::null:
+                object_type_index = static_cast<int>(object_type::null);
                 break;
-            case object_type::floating:
-                value = nlohmann::json::number_float_t {};
+            case nlohmann::detail::value_t::object:
+                object_type_index = static_cast<int>(object_type::object);
                 break;
-            case object_type::integer:
-                value = nlohmann::json::number_integer_t {};
+            case nlohmann::detail::value_t::array:
+                object_type_index = static_cast<int>(object_type::array);
                 break;
-            case object_type::string:
-                value = nlohmann::json::string_t {};
+            case nlohmann::detail::value_t::string:
+                object_type_index = static_cast<int>(object_type::string);
                 break;
-            case object_type::object:
-                value = nlohmann::json::object();
+            case nlohmann::detail::value_t::boolean:
+                object_type_index = static_cast<int>(object_type::boolean);
                 break;
-            case object_type::array:
-                value = nlohmann::json::array();
+            case nlohmann::detail::value_t::number_integer:
+            case nlohmann::detail::value_t::number_unsigned:
+                object_type_index = static_cast<int>(object_type::integer);
                 break;
-            case object_type::null:
-                value = nullptr;
+            case nlohmann::detail::value_t::number_float:
+                object_type_index = static_cast<int>(object_type::floating);
+                break;
+            case nlohmann::detail::value_t::binary:
+                break;
+            case nlohmann::detail::value_t::discarded:
                 break;
             }
-
-            // 操作オブジェクト
-            nlohmann::json op;
-            switch (_current_action.mode) {
-            case action::mode_t::add:
-                op = ::make_add_op(pointer, value);
-                break;
-            case action::mode_t::replace:
-                op = ::make_replace_op(pointer, value);
-                break;
-            }
-
-            // ＪＳＯＮパッチとし適用
-            _json = _json.patch(::make_patch(op));
-            
-            close = true;
         }
-        if (close) {
-            index = -1;
-            name.clear();
-            object_type_index = static_cast<int>(object_type::unknown);
-            _current_action.reset();
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
     }
+    if (ImGui::ListBox("object type", &object_type_index, items, IM_ARRAYSIZE(items))) {
+
+    }
+
+    // キャンセルボタン
+    auto close = false;
+    if (ImGui::Button("cancel")) {
+        close = true;
+    }
+
+    ImGui::SameLine();
+
+    // ＯＫボタン
+    if (is_add_op && is_object && name.empty()) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        auto button_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+        button_color.w *= 0.5f;
+        ImGui::PushStyleColor(ImGuiCol_Button, button_color);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    }
+    auto ok = ImGui::Button("ok");
+    if (is_add_op && is_object && name.empty()) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleColor(2);
+    }
+    if (ok) {
+        // ＪＳＯＮポインタ
+        auto pointer = act.pointer;
+        if (!is_add_op) {
+            // replace 操作なら、そのものを指す
+
+        } else if (is_array) {
+            pointer /= index;
+
+        } else if (is_object) {
+            pointer /= name;
+        }
+
+        // 設定する値
+        nlohmann::json value;
+        switch (static_cast<object_type>(object_type_index)) {
+        case object_type::boolean:
+            value = nlohmann::json::boolean_t {};
+            break;
+        case object_type::floating:
+            value = nlohmann::json::number_float_t {};
+            break;
+        case object_type::integer:
+            value = nlohmann::json::number_integer_t {};
+            break;
+        case object_type::string:
+            value = nlohmann::json::string_t {};
+            break;
+        case object_type::object:
+            value = nlohmann::json::object();
+            break;
+        case object_type::array:
+            value = nlohmann::json::array();
+            break;
+        case object_type::null:
+            value = nullptr;
+            break;
+        }
+
+        // 操作オブジェクト
+        nlohmann::json op;
+        switch (act.mode) {
+        case action::mode_t::add:
+            op = ::make_add_op(pointer, value);
+            break;
+        case action::mode_t::replace:
+            op = ::make_replace_op(pointer, value);
+            break;
+        }
+
+        // ＪＳＯＮパッチとして適用
+        json = json.patch(::make_patch(op));
+        
+        close = true;
+    }
+    
+    // ポップアップを閉じる
+    if (close) {
+        index = -1;
+        name.clear();
+        object_type_index = static_cast<int>(object_type::unknown);
+        act.reset();
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
 }
 
 json_editor::action json_editor::property(const char *name, nlohmann::json &json, nlohmann::json::json_pointer pointer) {
@@ -375,7 +391,6 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
     } else if (json.is_object()) {
         auto open = begin_tree(name, "object", json.size(), result_action);
         if (result_action) {
-            result_action.target = &json;
             result_action.pointer = pointer;
         }
         if (open) {
@@ -390,7 +405,6 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
     } else if (json.is_array()) {
         auto open = begin_tree(name, "array", json.size(), result_action);
         if (result_action) {
-            result_action.target = &json;
             result_action.pointer = pointer;
         }
         if (open) {
@@ -417,7 +431,6 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
         if (ImGui::Selectable("copy")) result_action.mode = action::mode_t::copy;
         if (ImGui::Selectable("clear")) result_action.mode = action::mode_t::clear;
         if (result_action) {
-            result_action.target = &json;
             result_action.pointer = pointer;
         }
         ImGui::EndPopup();
