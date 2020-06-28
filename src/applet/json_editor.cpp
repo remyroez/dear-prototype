@@ -104,7 +104,12 @@ void json_editor::apply_action() {
         ImGui::OpenPopup("New Object");
         break;
     case action::mode_t::remove:
-        ::patch_remove(_json, _current_action.pointer);
+        if (_current_action.pointer.empty()) {
+            // ルートは削除できない
+
+        } else {
+            ::patch_remove(_json, _current_action.pointer);
+        }
         _current_action.reset();
         break;
     case action::mode_t::copy:
@@ -121,7 +126,7 @@ void json_editor::apply_action() {
         _json[_current_action.pointer].clear();
         _current_action.reset();
         break;
-    defalut:
+    default:
         _current_action.reset();
         break;
     }
@@ -409,11 +414,12 @@ json_editor::action json_editor::property(const char *name, nlohmann::json &json
         if (ImGui::Selectable("add")) result_action.mode = action::mode_t::add;
         if (ImGui::Selectable("replace")) result_action.mode = action::mode_t::replace;
         //if (ImGui::Selectable("move")) result_action.mode = action::mode_t::move;
+        ImGui::Separator();
         if (ImGui::Selectable("copy")) result_action.mode = action::mode_t::copy;
         if (ImGui::Selectable("paste")) result_action.mode = action::mode_t::paste;
         ImGui::Separator();
         if (ImGui::Selectable("clear")) result_action.mode = action::mode_t::clear;
-        if (ImGui::Selectable("remove")) result_action.mode = action::mode_t::remove;
+        if (!pointer.empty() && ImGui::Selectable("remove")) result_action.mode = action::mode_t::remove;
         if (result_action) {
             result_action.pointer = pointer;
         }
