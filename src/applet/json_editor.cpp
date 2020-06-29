@@ -4,7 +4,7 @@
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 
-#include "stdio.h"
+#include <filesystem>
 
 namespace {
 
@@ -69,8 +69,11 @@ void json_editor::install(dear::application *app) {
 }
 
 void json_editor::frame(double delta_time) {
+    ImGui::PushID(this);
     ImGui::SetNextWindowSize(ImVec2(480, 640), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(name())) {
+    if (ImGui::Begin(name(), nullptr, ImGuiWindowFlags_MenuBar)) {
+        menubar();
+
         if (_filename.empty()) {
             ImGui::Text("untitled.json");
 
@@ -92,8 +95,75 @@ void json_editor::frame(double delta_time) {
         if (_current_action) {
             apply_action();
         }
+
+        popup_file_dialog();
     }
     ImGui::End();
+    ImGui::PopID();
+}
+
+void json_editor::menubar() {
+    if (!ImGui::BeginMenuBar()) return;
+
+    bool open = false;
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("New")) {
+            _filename.clear();
+            _json.clear();
+            _current_action.reset();
+        }
+        if (ImGui::MenuItem("Open", "Ctrl+O")) {
+            open = true;
+        }
+        ImGui::EndMenu();
+    }
+
+    ImGui::EndMenuBar();
+
+    if (open) ImGui::OpenPopup("Open File##json_editor");
+}
+
+void json_editor::popup_file_dialog() {
+    if (!ImGui::BeginPopupModal("Open File##json_editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+
+    // ディレクトリ
+    static std::filesystem::path directory = std::filesystem::current_path();
+    if (ImGui::ArrowButton("back", ImGuiDir_Left)) {
+        directory = directory.parent_path();
+    }
+    ImGui::SameLine();
+    {
+        auto temp = directory.string();
+        ImGui::InputText("directory", &temp, ImGuiInputTextFlags_ReadOnly);
+    }
+
+    // ファイル名
+    static std::string filename;
+
+    // ファイル一覧
+    if (ImGui::ListBoxHeader("##files", ImVec2(-1, 100))) {
+
+        ImGui::ListBoxFooter();
+    }
+
+    ImGui::InputText("file name", &filename);
+
+    bool close = false;
+    if (ImGui::Button("cancel")) {
+        close = true;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("open")) {
+        close = true;
+    }
+
+    if (close) {
+        filename.clear();
+        directory = std::filesystem::current_path();
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
 }
 
 void json_editor::apply_action() {
@@ -101,7 +171,7 @@ void json_editor::apply_action() {
     case action::mode_t::add:
     case action::mode_t::insert:
     case action::mode_t::replace:
-        ImGui::OpenPopup("New Object");
+        ImGui::OpenPopup("New Object##json_editor");
         break;
     case action::mode_t::remove:
         if (_current_action.pointer.empty()) {
@@ -133,7 +203,7 @@ void json_editor::apply_action() {
 
     if (!_current_action) return;
 
-    if (ImGui::BeginPopupModal("Object Info", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal("Object Info##json_editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("%s", _current_action.pointer.to_string().c_str());
         if (ImGui::Button("ok")) {
             _current_action.reset();
@@ -146,7 +216,7 @@ void json_editor::apply_action() {
 }
 
 void json_editor::window_new_object(nlohmann::json &json, action &act) {
-    if (!ImGui::BeginPopupModal("New Object", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+    if (!ImGui::BeginPopupModal("New Object##json_editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
 
     static auto first = true;
 

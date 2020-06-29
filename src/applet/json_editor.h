@@ -20,6 +20,12 @@ class json_editor : public dear::applet {
     // フレーム経過
     void frame(double delta_time);
 
+    // メニューバー
+    void menubar();
+
+    // ファイルダイアログのポップアップ
+    void popup_file_dialog();
+
     // アクション適用
     void apply_action();
 
