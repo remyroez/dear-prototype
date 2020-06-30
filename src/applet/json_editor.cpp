@@ -5,6 +5,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 
 #include <filesystem>
+#include <fstream>
 
 namespace {
 
@@ -126,10 +127,15 @@ void json_editor::menubar() {
 void json_editor::popup_file_dialog() {
     if (!ImGui::BeginPopupModal("Open File##json_editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
 
+    static auto update = true;
+
     // ディレクトリ
     static std::filesystem::path directory = std::filesystem::current_path();
     if (ImGui::ArrowButton("back", ImGuiDir_Left)) {
-        directory = directory.parent_path();
+        if (auto parent_path = directory.parent_path(); parent_path != directory) {
+            directory = parent_path;
+            update = true;
+        }
     }
     ImGui::SameLine();
     {
@@ -139,10 +145,46 @@ void json_editor::popup_file_dialog() {
 
     // ファイル名
     static std::string filename;
+    static std::string filter;
 
     // ファイル一覧
+    static std::vector<std::filesystem::directory_entry> files;
+    static int index = -1;
+    if (update) {
+        files.clear();
+        for (auto &entry : std::filesystem::directory_iterator{ directory }) {
+            files.push_back(entry);
+        }
+        index = -1;
+        update = false;
+    }
     if (ImGui::ListBoxHeader("##files", ImVec2(-1, 100))) {
+        int i = 0;
+        for (auto &file : files) {
+            if (file.is_directory()) {
+                if (ImGui::Selectable((file.path().filename().string() + "/").c_str(), index == i, ImGuiSelectableFlags_AllowDoubleClick)) {
+                    index = i;
+                    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                        directory = file.path();
+                        update = true;
+                    }
+                }
+            }
+            ++i;
+        }
+        i = 0;
+        for (auto &file : files) {
+            if (file.is_directory()) {
+                // 
 
+            } else {
+                if (ImGui::Selectable(file.path().filename().c_str(), index == i)) {
+                    index = i;
+                    filename = file.path().filename();
+                }
+            }
+            ++i;
+        }
         ImGui::ListBoxFooter();
     }
 
@@ -154,10 +196,18 @@ void json_editor::popup_file_dialog() {
     }
     ImGui::SameLine();
     if (ImGui::Button("open")) {
+        if (auto path = directory / filename; path.extension() == ".json" && std::filesystem::exists(path)) {
+            if (std::ifstream ifs(path.string()); ifs.is_open()) {
+                ifs >> _json;
+                _filename = path.filename();
+            }
+        }
+        
         close = true;
     }
 
     if (close) {
+        update = true;
         filename.clear();
         directory = std::filesystem::current_path();
         ImGui::CloseCurrentPopup();
