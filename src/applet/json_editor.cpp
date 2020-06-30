@@ -97,7 +97,14 @@ void json_editor::frame(double delta_time) {
             apply_action();
         }
 
-        popup_file_dialog();
+        if (auto maybe_path = popup_file_dialog("Open File##json_editor")) {
+            if (std::filesystem::exists(*maybe_path) && std::filesystem::is_regular_file(*maybe_path)) {
+                if (std::ifstream ifs(maybe_path->string()); ifs.is_open()) {
+                    ifs >> _json;
+                    _filename = maybe_path->filename();
+                }
+            }
+        }
     }
     ImGui::End();
     ImGui::PopID();
@@ -124,8 +131,9 @@ void json_editor::menubar() {
     if (open) ImGui::OpenPopup("Open File##json_editor");
 }
 
-void json_editor::popup_file_dialog() {
-    if (!ImGui::BeginPopupModal("Open File##json_editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) return;
+std::optional<std::filesystem::path> json_editor::popup_file_dialog(const char *id) {
+    ImGui::SetNextWindowSize(ImVec2(480, 320), ImGuiCond_FirstUseEver);
+    if (!ImGui::BeginPopupModal(id, nullptr)) return std::nullopt;
 
     static auto update = true;
 
@@ -140,12 +148,14 @@ void json_editor::popup_file_dialog() {
     ImGui::SameLine();
     {
         auto temp = directory.string();
-        ImGui::InputText("directory", &temp, ImGuiInputTextFlags_ReadOnly);
+        ImGui::PushItemWidth(-1);
+        ImGui::InputText("##directory", &temp, ImGuiInputTextFlags_ReadOnly);
+        ImGui::PopItemWidth();
     }
 
     // ファイル名
     static std::string filename;
-    static std::string filter;
+    static std::string filter = ".json";
 
     // ファイル一覧
     static std::vector<std::filesystem::directory_entry> files;
@@ -153,12 +163,17 @@ void json_editor::popup_file_dialog() {
     if (update) {
         files.clear();
         for (auto &entry : std::filesystem::directory_iterator{ directory }) {
-            files.push_back(entry);
+            if (!entry.is_directory() && !filter.empty() && entry.path().extension() != filter) {
+                // フィルタ一致しない
+
+            } else {
+                files.push_back(entry);
+            }
         }
         index = -1;
         update = false;
     }
-    if (ImGui::ListBoxHeader("##files", ImVec2(-1, 100))) {
+    if (ImGui::ListBoxHeader("##files", ImVec2(-1, -(ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing() * 3)))) {
         int i = 0;
         for (auto &file : files) {
             if (file.is_directory()) {
@@ -189,31 +204,46 @@ void json_editor::popup_file_dialog() {
     }
 
     ImGui::InputText("file name", &filename);
+    if (ImGui::InputText("filter", &filter)) {
+        update = true;
+    }
 
+    std::filesystem::path result;
+    bool open = false;
     bool close = false;
     if (ImGui::Button("cancel")) {
         close = true;
     }
     ImGui::SameLine();
-    if (ImGui::Button("open")) {
-        if (auto path = directory / filename; path.extension() == ".json" && std::filesystem::exists(path)) {
-            if (std::ifstream ifs(path.string()); ifs.is_open()) {
-                ifs >> _json;
-                _filename = path.filename();
-            }
-        }
-        
+
+    if (filename.empty()) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        auto button_color = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+        button_color.w *= 0.5f;
+        ImGui::PushStyleColor(ImGuiCol_Button, button_color);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    }
+    auto ok = ImGui::Button("ok");
+    if (filename.empty()) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleColor(2);
+    }
+    if (ok) {
+        result = directory / filename;
         close = true;
     }
 
     if (close) {
         update = true;
         filename.clear();
+        filter = ".json";
         directory = std::filesystem::current_path();
         ImGui::CloseCurrentPopup();
     }
 
     ImGui::EndPopup();
+
+    return !result.empty() ? std::optional<std::filesystem::path>{ result } : std::nullopt;
 }
 
 void json_editor::apply_action() {

@@ -5,6 +5,8 @@
 #include "json.hpp"
 
 #include <string>
+#include <filesystem>
+#include <optional>
 
 namespace applet {
 
@@ -24,7 +26,7 @@ class json_editor : public dear::applet {
     void menubar();
 
     // ファイルダイアログのポップアップ
-    void popup_file_dialog();
+    static std::optional<std::filesystem::path> popup_file_dialog(const char *id);
 
     // アクション適用
     void apply_action();
