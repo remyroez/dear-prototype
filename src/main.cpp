@@ -142,7 +142,7 @@ class application : public dear::application {
         });
         make_applet<example_applet>(true);
         make_applet<applet_setting>();
-        background = make_applet<applet::background>();
+        make_applet<applet::background>();
         make_applet<applet::json_editor>();
     }
 
@@ -158,14 +158,12 @@ class application : public dear::application {
 
         dear::gfx::load_image_async("avatar.png", _image);
 
-        if (auto app = background.lock(); auto bg = std::static_pointer_cast<applet::background>(app)) {
+        if (auto bg = get_applet<applet::background>()) {
             bg->load_background_image("avatar.png");
         }
     }
 
     dear::image _image;
-
-    applet_handle background;
 };
 
 } // namespace

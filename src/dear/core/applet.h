@@ -97,6 +97,9 @@ protected:
 
 // アプレット定義マクロ
 #define DEAR_APPLET(NAME) \
+public:\
+static constexpr const char *id = NAME; \
+private:\
 using applet::applet; \
 virtual const char *name() override { return NAME; }
 
