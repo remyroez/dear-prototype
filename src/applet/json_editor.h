@@ -25,6 +25,15 @@ class json_editor : public dear::applet {
     // メニューバー
     void menubar();
 
+    // 新規ファイル
+    void new_file();
+
+    // ファイルを開く
+    void open_file(const std::filesystem::path &path);
+
+    // ファイルを保存
+    void save_file(const std::filesystem::path &path);
+
     // ファイルダイアログのポップアップ
     static std::optional<std::filesystem::path> popup_file_dialog(const char *id);
 
@@ -95,6 +104,9 @@ class json_editor : public dear::applet {
 
     // ファイル名
     std::string _filename;
+
+    // ファイルパス
+    std::filesystem::path _filepath;
 
     // ＪＳＯＮオブジェクト
     nlohmann::json _json;

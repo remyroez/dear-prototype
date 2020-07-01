@@ -98,12 +98,11 @@ void json_editor::frame(double delta_time) {
         }
 
         if (auto maybe_path = popup_file_dialog("Open File##json_editor")) {
-            if (std::filesystem::exists(*maybe_path) && std::filesystem::is_regular_file(*maybe_path)) {
-                if (std::ifstream ifs(maybe_path->string()); ifs.is_open()) {
-                    ifs >> _json;
-                    _filename = maybe_path->filename();
-                }
-            }
+            open_file(*maybe_path);
+        }
+
+        if (auto maybe_path = popup_file_dialog("Save File##json_editor")) {
+            save_file(*maybe_path);
         }
     }
     ImGui::End();
@@ -113,22 +112,72 @@ void json_editor::frame(double delta_time) {
 void json_editor::menubar() {
     if (!ImGui::BeginMenuBar()) return;
 
-    bool open = false;
+    enum class menu_command {
+        none,
+        open,
+        save_as,
+    };
+    menu_command command = menu_command::none;
+
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("New")) {
-            _filename.clear();
-            _json.clear();
-            _current_action.reset();
+            new_file();
         }
         if (ImGui::MenuItem("Open", "Ctrl+O")) {
-            open = true;
+            command = menu_command::open;
+        }
+        if (ImGui::MenuItem("Save", nullptr, nullptr, !_filepath.empty())) {
+            save_file(_filepath);
+        }
+        if (ImGui::MenuItem("Save As...")) {
+            command = menu_command::save_as;
         }
         ImGui::EndMenu();
     }
 
     ImGui::EndMenuBar();
 
-    if (open) ImGui::OpenPopup("Open File##json_editor");
+    switch (command) {
+    case menu_command::open:
+        ImGui::OpenPopup("Open File##json_editor");
+        break;
+    case menu_command::save_as:
+        ImGui::OpenPopup("Save File##json_editor");
+        break;
+    }
+}
+
+void json_editor::new_file() {
+    _filepath.clear();
+    _filename.clear();
+    _json.clear();
+    _current_action.reset();
+}
+
+void json_editor::open_file(const std::filesystem::path &path) {
+    if (!std::filesystem::exists(path)) {
+        // ファイルが見つからない
+
+    } else if (!std::filesystem::is_regular_file(path)) {
+        // 通常のファイルではない
+
+    } else if (std::ifstream ifs(path.string()); !ifs.is_open()) {
+        // ファイルを開くことに失敗した
+        
+    } else {
+        // ファイル読み込み
+        ifs >> _json;
+        _filepath = path;
+        _filename = path.filename();
+    }
+}
+
+void json_editor::save_file(const std::filesystem::path &path) {
+    std::ofstream ofs(path.string());
+    ofs << std::setw(4) << _json << std::endl;
+
+    _filename = path.filename();
+    _filepath = path;
 }
 
 std::optional<std::filesystem::path> json_editor::popup_file_dialog(const char *id) {
