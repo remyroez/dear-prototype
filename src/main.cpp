@@ -122,8 +122,25 @@ class application : public dear::application {
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("imgui")) {
+                ImGui::MenuItem("Demo", nullptr, &_open_demo);
+                ImGui::MenuItem("Metrics", nullptr, &_open_metrics);
+                ImGui::MenuItem("Style Editor", nullptr, &_open_style);
+                ImGui::Separator();
+                ImGui::MenuItem("About Dear ImGui", nullptr, &_open_about);
+                ImGui::EndMenu();
+            }
         });
-        add_frame_callback([](auto){ ImGui::ShowDemoWindow(); });
+        add_frame_callback([this](auto){
+            if (_open_demo) ImGui::ShowDemoWindow(&_open_demo);
+            if (_open_about) ImGui::ShowAboutWindow(&_open_about);
+            if (_open_metrics) ImGui::ShowMetricsWindow(&_open_metrics);
+            if (_open_style) {
+                ImGui::Begin("Dear ImGui Style Editor", &_open_style);
+                ImGui::ShowStyleEditor();
+                ImGui::End();
+            }
+        });
         add_frame_callback([this](auto){
             if (ImGui::Begin("image")) {
                 ImGui::Text("width: %d", _image.width);
@@ -164,6 +181,11 @@ class application : public dear::application {
     }
 
     dear::image _image;
+
+    bool _open_demo = true;
+    bool _open_about = false;
+    bool _open_metrics = false;
+    bool _open_style = false;
 };
 
 } // namespace
