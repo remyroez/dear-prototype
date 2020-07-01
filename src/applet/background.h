@@ -34,6 +34,9 @@ class background : public dear::applet {
     ImVec2 _custom_uv1 { 1.f, 1.f };
 
 public:
+    // 設定
+    virtual void settings() override;
+
     // 背景画像の読み込み
     void load_background_image(const char *filename);
 

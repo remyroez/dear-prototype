@@ -20,6 +20,9 @@ public:
 
     // アンインストール
     virtual void uninstall(application *app) {}
+
+    // 設定
+    virtual void settings() {}
 };
 
 } // namespace dear::core

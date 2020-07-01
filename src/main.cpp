@@ -19,15 +19,52 @@ class applets_applet : public dear::applet {
 
     // フレーム経過
     void frame(dear::application *app, double delta_time) {
-        ImGui::SetNextWindowSize(ImVec2(200, 300), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(480, 320), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Applets")) {
             int index = 0;
-            for (auto &applet : app->get_applets()) {
-                if (ImGui::Selectable(applet->name(), index == _selected)) {
-                    _selected = index;
-                }
-                index++;
+            auto &applets = app->get_applets();
+            ImGui::Columns(2);
+            static auto first = true;
+            if (first) {
+                first = false;
+                ImGui::SetColumnWidth(0, ImGui::GetWindowWidth() / 3);
             }
+            if (ImGui::ListBoxHeader("##list", ImVec2(-1, -1))) {
+                for (auto &applet : applets) {
+                    if (ImGui::Selectable(applet->name(), index == _selected)) {
+                        _selected = index;
+                    }
+                    index++;
+                }
+                ImGui::ListBoxFooter();
+            }
+            ImGui::NextColumn();
+
+            if (ImGui::BeginChild("right", ImVec2(-1, -1), false, ImGuiWindowFlags_NoScrollbar)) {
+                dear::applet *applet = nullptr;
+                if (_selected < 0) {
+                    // 選択したインデックスが不正
+
+                } else if (_selected >= applets.size()) {
+                    // 選択したインデックスが超過
+
+                } else {
+                    applet = applets[_selected].get();
+                }
+                if (applet) {
+                    ImGui::Text("%s", applet->name());
+
+                } else {
+                    ImGui::TextDisabled("(no select)");
+                }
+                ImGui::Separator();
+                if (ImGui::BeginChild("settings", ImVec2(-1, -1))) {
+                    if (applet) applet->settings();
+                }
+                ImGui::EndChild();
+            }
+            ImGui::EndChild();
+            ImGui::Columns(1);
         }
         ImGui::End();
     }
