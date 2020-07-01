@@ -66,7 +66,7 @@ namespace applet {
 void json_editor::install(dear::application *app) {
     app->add_frame_callback(std::bind(&json_editor::frame, this, std::placeholders::_1));
 
-    _json = nlohmann::json::meta();
+    _json = nlohmann::json::object();
 }
 
 void json_editor::frame(double delta_time) {
@@ -150,7 +150,7 @@ void json_editor::menubar() {
 void json_editor::new_file() {
     _filepath.clear();
     _filename.clear();
-    _json.clear();
+    _json = nlohmann::json::object();
     _current_action.reset();
 }
 
