@@ -95,4 +95,14 @@ protected:
 
 } // namespace dear::core
 
+// アプレット定義マクロ
+#define DEAR_APPLET(NAME) \
+using applet::applet; \
+virtual const char *name() override { return NAME; }
+
+//あアプレット定義マクロ（ウィンドウ無し）
+#define DEAR_APPLET_NOWIN(NAME) \
+DEAR_APPLET(NAME) \
+virtual bool has_window() const override { return false; }
+
 #endif // DEAR_CORE_APPLET_H_

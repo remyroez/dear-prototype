@@ -11,10 +11,7 @@
 namespace applet {
 
 class json_editor : public dear::applet {
-    // 名前
-    virtual const char *name() override {
-        return "JSON Editor";
-    }
+    DEAR_APPLET("JSON Editor");
     
     // ウィンドウを開く
     virtual void open() override {

@@ -6,16 +6,13 @@
 namespace applet {
 
 class background : public dear::applet {
-    // 名前
-    virtual const char *name() override {
-        return "background";
-    }
-
-    // ウィンドウがあるかどうか返す
-    virtual bool has_window() const override { return false; }
+    DEAR_APPLET_NOWIN("Background");
 
     // インストール
     virtual void install(dear::application *app) override;
+    
+    // 設定
+    virtual void settings() override;
 
     // 背景画像
     dear::image _image;
@@ -37,9 +34,6 @@ class background : public dear::applet {
     ImVec2 _custom_uv1 { 1.f, 1.f };
 
 public:
-    // 設定
-    virtual void settings() override;
-
     // 背景画像の読み込み
     void load_background_image(const char *filename);
 

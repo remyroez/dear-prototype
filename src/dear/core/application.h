@@ -62,7 +62,7 @@ public:
     // アプレット登録
     template <class T, class ...Args>
     inline applet_handle make_applet(Args &&...args) {
-        return _applets.emplace_back(std::make_shared<T>(std::forward(args)...));
+        return _applets.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
     }
 
     // 初期化関数型

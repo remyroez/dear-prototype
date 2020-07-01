@@ -7,10 +7,7 @@
 namespace {
 
 class applet_setting : public dear::applet {
-    // 名前
-    virtual const char *name() override {
-        return "Applet Setting";
-    }
+    DEAR_APPLET("Applet Setting");
     
     // ウィンドウを開く
     virtual void open() override {
@@ -82,14 +79,7 @@ class applet_setting : public dear::applet {
 };
 
 class example_applet : public dear::applet {
-public:
-    example_applet() : applet(true) {}
-
-private:
-    // 名前
-    virtual const char *name() override {
-        return "Example";
-    }
+    DEAR_APPLET("Example");
 
     // ウィンドウコンテンツ処理
     virtual void content(double delta_time) override {
@@ -150,7 +140,7 @@ class application : public dear::application {
             }
             ImGui::End();
         });
-        make_applet<example_applet>();
+        make_applet<example_applet>(true);
         make_applet<applet_setting>();
         background = make_applet<applet::background>();
         make_applet<applet::json_editor>();
