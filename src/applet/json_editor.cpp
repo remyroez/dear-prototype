@@ -135,6 +135,7 @@ std::optional<std::filesystem::path> json_editor::popup_file_dialog(const char *
     ImGui::SetNextWindowSize(ImVec2(480, 320), ImGuiCond_FirstUseEver);
     if (!ImGui::BeginPopupModal(id, nullptr)) return std::nullopt;
 
+    auto ok = false;
     static auto update = true;
 
     // ディレクトリ
@@ -193,9 +194,12 @@ std::optional<std::filesystem::path> json_editor::popup_file_dialog(const char *
                 // 
 
             } else {
-                if (ImGui::Selectable(file.path().filename().c_str(), index == i)) {
+                if (ImGui::Selectable(file.path().filename().c_str(), index == i, ImGuiSelectableFlags_AllowDoubleClick)) {
                     index = i;
                     filename = file.path().filename();
+                    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                        ok = true;
+                    }
                 }
             }
             ++i;
@@ -209,7 +213,6 @@ std::optional<std::filesystem::path> json_editor::popup_file_dialog(const char *
     }
 
     std::filesystem::path result;
-    bool open = false;
     bool close = false;
     if (ImGui::Button("cancel")) {
         close = true;
@@ -223,7 +226,7 @@ std::optional<std::filesystem::path> json_editor::popup_file_dialog(const char *
         ImGui::PushStyleColor(ImGuiCol_Button, button_color);
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
     }
-    auto ok = ImGui::Button("ok");
+    ok = ImGui::Button("ok") || ok;
     if (filename.empty()) {
         ImGui::PopItemFlag();
         ImGui::PopStyleColor(2);
