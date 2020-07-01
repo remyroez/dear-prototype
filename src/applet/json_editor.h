@@ -15,12 +15,18 @@ class json_editor : public dear::applet {
     virtual const char *name() override {
         return "JSON Editor";
     }
+    
+    // ウィンドウを開く
+    virtual void open() override {
+        applet::open();
+        new_file();
+    }
 
-    // インストール
-    virtual void install(dear::application *app) override;
+    // ウィンドウ前処理
+    virtual int pre_begin() override;
 
-    // フレーム経過
-    void frame(double delta_time);
+    // ウィンドウコンテンツ処理
+    virtual void content(double delta_time) override;
 
     // メニューバー
     void menubar();

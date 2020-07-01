@@ -6,67 +6,75 @@
 
 namespace {
 
-class applets_applet : public dear::applet {
+class applet_setting : public dear::applet {
     // 名前
     virtual const char *name() override {
-        return "applets";
+        return "Applet Setting";
+    }
+    
+    // ウィンドウを開く
+    virtual void open() override {
+        applet::open();
+        _selected = -1;
     }
 
-    // インストール
-    virtual void install(dear::application *app) override {
-        app->add_frame_callback(std::bind(&applets_applet::frame, this, app, std::placeholders::_1));
-    }
-
-    // フレーム経過
-    void frame(dear::application *app, double delta_time) {
+    // ウィンドウ前処理
+    virtual int pre_begin() override {
         ImGui::SetNextWindowSize(ImVec2(480, 320), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("Applets")) {
-            int index = 0;
-            auto &applets = app->get_applets();
-            ImGui::Columns(2);
-            static auto first = true;
-            if (first) {
-                first = false;
-                ImGui::SetColumnWidth(0, ImGui::GetWindowWidth() / 3);
+        return 0;
+    }
+
+    // ウィンドウコンテンツ処理
+    virtual void content(double delta_time) override {
+        ImGui::Columns(2);
+        
+        auto &applets = app()->get_applets();
+        int index = 0;
+
+        // アプレット一覧
+        static auto first = true;
+        if (first) {
+            first = false;
+            ImGui::SetColumnWidth(0, ImGui::GetWindowWidth() / 3);
+        }
+        if (ImGui::ListBoxHeader("##list", ImVec2(-1, -1))) {
+            for (auto &applet : applets) {
+                if (ImGui::Selectable(applet->name(), index == _selected)) {
+                    _selected = index;
+                }
+                index++;
             }
-            if (ImGui::ListBoxHeader("##list", ImVec2(-1, -1))) {
-                for (auto &applet : applets) {
-                    if (ImGui::Selectable(applet->name(), index == _selected)) {
-                        _selected = index;
-                    }
-                    index++;
-                }
-                ImGui::ListBoxFooter();
+            ImGui::ListBoxFooter();
+        }
+        ImGui::NextColumn();
+
+        // アプレット設定
+        if (ImGui::BeginChild("right", ImVec2(-1, -1), false, ImGuiWindowFlags_NoScrollbar)) {
+            dear::applet *applet = nullptr;
+            if (_selected < 0) {
+                // 選択したインデックスが不正
+
+            } else if (_selected >= applets.size()) {
+                // 選択したインデックスが超過
+
+            } else {
+                applet = applets[_selected].get();
             }
-            ImGui::NextColumn();
+            if (applet) {
+                ImGui::Text("%s", applet->name());
 
-            if (ImGui::BeginChild("right", ImVec2(-1, -1), false, ImGuiWindowFlags_NoScrollbar)) {
-                dear::applet *applet = nullptr;
-                if (_selected < 0) {
-                    // 選択したインデックスが不正
-
-                } else if (_selected >= applets.size()) {
-                    // 選択したインデックスが超過
-
-                } else {
-                    applet = applets[_selected].get();
-                }
-                if (applet) {
-                    ImGui::Text("%s", applet->name());
-
-                } else {
-                    ImGui::TextDisabled("(no select)");
-                }
-                ImGui::Separator();
-                if (ImGui::BeginChild("settings", ImVec2(-1, -1))) {
-                    if (applet) applet->settings();
-                }
-                ImGui::EndChild();
+            } else {
+                ImGui::TextDisabled("(no select)");
+            }
+            ImGui::Separator();
+            if (ImGui::BeginChild("settings", ImVec2(-1, -1))) {
+                if (applet) applet->settings();
             }
             ImGui::EndChild();
-            ImGui::Columns(1);
         }
-        ImGui::End();
+        ImGui::EndChild();
+
+        ImGui::Columns(1);
     }
 
     // 選択
@@ -76,35 +84,27 @@ class applets_applet : public dear::applet {
 class example_applet : public dear::applet {
     // 名前
     virtual const char *name() override {
-        return "example";
+        return "Example";
     }
 
-    // インストール
-    virtual void install(dear::application *app) override {
-        app->add_frame_callback(std::bind(&example_applet::frame, this, std::placeholders::_1));
-    }
+    // ウィンドウコンテンツ処理
+    virtual void content(double delta_time) override {
+        // 1. Show a simple window
+        // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
+        static float f = 0.0f;
+        ImGui::Text("Hello, world!");
+        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+        //ImGui::ColorEdit3("clear color", &_pass_action.colors[0].val[0]);
+        if (ImGui::Button("Another Window")) show_another_window ^= 1;
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-    // フレーム経過
-    void frame(double delta_time) {
-        if (ImGui::Begin(name())) {
-            // 1. Show a simple window
-            // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
-            static float f = 0.0f;
-            ImGui::Text("Hello, world!");
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-            //ImGui::ColorEdit3("clear color", &_pass_action.colors[0].val[0]);
-            if (ImGui::Button("Another Window")) show_another_window ^= 1;
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-            // 2. Show another simple window, this time using an explicit Begin/End pair
-            if (show_another_window) {
-                ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_FirstUseEver);
-                ImGui::Begin("Another Window", &show_another_window);
-                ImGui::Text("Hello");
-                ImGui::End();
-            }
+        // 2. Show another simple window, this time using an explicit Begin/End pair
+        if (show_another_window) {
+            ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_FirstUseEver);
+            ImGui::Begin("Another Window", &show_another_window);
+            ImGui::Text("Hello");
+            ImGui::End();
         }
-        ImGui::End();
     }
 
     bool show_another_window = false;
@@ -116,6 +116,19 @@ class application : public dear::application {
         desc.enable_clipboard = true;
         desc.clipboard_size = 1024 * 1024;
 
+        add_mainmenu_callback([this](auto){
+            if (ImGui::BeginMenu("dear")) {
+                for (auto &applet : get_applets()) {
+                    if (!applet->has_window()) {
+                        // ウィンドウがないのでスキップ
+
+                    } else if (ImGui::MenuItem(applet->name(), nullptr, applet->opened())) {
+                        applet->toggle();
+                    }
+                }
+                ImGui::EndMenu();
+            }
+        });
         add_frame_callback([](auto){ ImGui::ShowDemoWindow(); });
         add_frame_callback([this](auto){
             if (ImGui::Begin("image")) {
@@ -134,7 +147,7 @@ class application : public dear::application {
             ImGui::End();
         });
         make_applet<example_applet>();
-        make_applet<applets_applet>();
+        make_applet<applet_setting>();
         background = make_applet<applet::background>();
         make_applet<applet::json_editor>();
     }

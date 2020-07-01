@@ -6,6 +6,10 @@
 namespace applet {
 
 class background : public dear::applet {
+public:
+    background() : applet(false, false) {}
+
+private:
     // 名前
     virtual const char *name() override {
         return "background";

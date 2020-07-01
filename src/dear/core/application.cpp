@@ -141,6 +141,7 @@ void application::configure_cb(sapp_desc &desc) {
 
     // アプレット初期化
     for (auto &applet : _applets) {
+        applet->reset_app(this);
         applet->install(this);
     }
 }
@@ -212,6 +213,11 @@ void application::frame_cb() {
     // 登録済みコールバック
     for (auto &callback : _frame_callbacks) {
         callback(delta_time);
+    }
+
+    // アプレットコールバック
+    for (auto &applet : _applets) {
+        if (applet->opened()) applet->frame(delta_time);
     }
 
     // 画面クリア
