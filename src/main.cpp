@@ -82,6 +82,10 @@ class applet_setting : public dear::applet {
 };
 
 class example_applet : public dear::applet {
+public:
+    example_applet() : applet(true) {}
+
+private:
     // 名前
     virtual const char *name() override {
         return "Example";

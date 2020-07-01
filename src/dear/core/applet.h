@@ -10,13 +10,16 @@ class application;
 class applet {
 public:
     // コンストラクタ
-    applet(bool open = false, bool has_window = true): _opened(open), _has_window(has_window) {}
+    applet(bool open = false): _opened(open) {}
 
     // デストラクタ
     virtual ~applet() {}
 
     // 名前
     virtual const char *name() = 0;
+
+    // ウィンドウがあるかどうか返す
+    virtual bool has_window() const { return true; }
 
     // インストール
     virtual void install(application *app) {}
@@ -66,9 +69,6 @@ public:
     // アプリケーションを設定する
     void reset_app(application *new_app) { _app = new_app; }
 
-    // ウィンドウがあるかどうか返す
-    bool has_window() const { return _has_window; }
-
 protected:
     // ウィンドウ前処理
     virtual int pre_begin() { return 0; }
@@ -91,9 +91,6 @@ protected:
 
     // ウィンドウ開閉フラグ
     bool _opened = false;
-
-    // ウィンドウがあるかどうか
-    bool _has_window = true;
 };
 
 } // namespace dear::core

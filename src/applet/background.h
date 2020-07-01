@@ -6,14 +6,13 @@
 namespace applet {
 
 class background : public dear::applet {
-public:
-    background() : applet(false, false) {}
-
-private:
     // 名前
     virtual const char *name() override {
         return "background";
     }
+
+    // ウィンドウがあるかどうか返す
+    virtual bool has_window() const override { return false; }
 
     // インストール
     virtual void install(dear::application *app) override;
