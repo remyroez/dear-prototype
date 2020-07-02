@@ -1,5 +1,6 @@
 #include "dear.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 
 #include "applet/background.h"
 #include "applet/json_editor.h"
@@ -36,9 +37,26 @@ class applet_setting : public dear::applet {
         }
         if (ImGui::ListBoxHeader("##list", ImVec2(-1, -1))) {
             for (auto &applet : applets) {
+                ImGui::PushID(applet->name());
+                if (!applet->has_window()) {
+                    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
+                }
+                {
+                    auto opened = applet->opened();
+                    if (ImGui::Checkbox("##open", &opened)) {
+                        applet->toggle();
+                    }
+                }
+                if (!applet->has_window()) {
+                    ImGui::PopStyleColor();
+                    ImGui::PopItemFlag();
+                }
+                ImGui::SameLine();
                 if (ImGui::Selectable(applet->name(), index == _selected)) {
                     _selected = index;
                 }
+                ImGui::PopID();
                 index++;
             }
             ImGui::ListBoxFooter();
