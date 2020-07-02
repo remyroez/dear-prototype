@@ -23,8 +23,8 @@ void background::render_background_color() {
                 drawlist->GetClipRectMax(),
                 _color_top_left,
                 _color_top_right,
-                _color_bottom_left,
-                _color_bottom_right
+                _color_bottom_right,
+                _color_bottom_left
             );
 
         } else {
