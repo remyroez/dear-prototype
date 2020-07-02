@@ -138,6 +138,10 @@ class application : public dear::application {
                         applet->toggle();
                     }
                 }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Quit")) {
+                    quit();
+                }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("imgui")) {

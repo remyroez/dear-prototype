@@ -28,6 +28,9 @@ public:
     // シャットダウン
     void shutdown();
 
+    // 終了させる
+    void quit();
+
     // 初期設定コールバック
     void configure_cb(sapp_desc &desc);
 

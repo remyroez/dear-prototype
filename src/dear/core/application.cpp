@@ -115,6 +115,10 @@ void application::shutdown() {
     sargs_shutdown();
 }
 
+void application::quit() {
+    sapp_request_quit();
+}
+
 void application::configure_cb(sapp_desc &desc) {
     // デフォルト設定
     desc.user_data = this;
