@@ -5,9 +5,33 @@ namespace applet {
 
 void background::install(dear::application *app) {
     app->add_background_callback([this](auto) {
-        // 背景画像
+        render_background_color();
         render_background_image();
     });
+}
+
+void background::render_background_color() {
+    if (auto *drawlist = ImGui::GetBackgroundDrawList()) {
+        if (_multi_color) {
+            // マルチカラー
+            drawlist->AddRectFilledMultiColor(
+                drawlist->GetClipRectMin(),
+                drawlist->GetClipRectMax(),
+                _color_top_left,
+                _color_top_right,
+                _color_bottom_left,
+                _color_bottom_right
+            );
+
+        } else {
+            // シングルカラー
+            drawlist->AddRectFilled(
+                drawlist->GetClipRectMin(),
+                drawlist->GetClipRectMax(),
+                _color_top_left
+            );
+        }
+    }
 }
 
 void background::render_background_image() {
@@ -53,6 +77,20 @@ void background::render_background_image() {
 }
 
 void background::settings() {
+    if (ImGui::CollapsingHeader("background color", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Checkbox("multi color", &_multi_color);
+        if (_multi_color) {
+            ImGui::ColorEdit3("top left", (float*)&_color_top_left);
+            ImGui::ColorEdit3("top right", (float*)&_color_top_right);
+            ImGui::ColorEdit3("bottom left", (float*)&_color_bottom_left);
+            ImGui::ColorEdit3("bottom right", (float*)&_color_bottom_right);
+
+        } else {
+            ImGui::ColorEdit3("color###top left", (float*)&_color_top_left);
+        }
+        ImGui::NewLine();
+    }
+    
     if (ImGui::CollapsingHeader("background size", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::RadioButton("fixed", _size == background_size::fixed)) _size = background_size::fixed;
         if (ImGui::RadioButton("fit", _size == background_size::fit)) _size = background_size::fit;

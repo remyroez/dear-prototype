@@ -11,6 +11,9 @@ class background : public dear::applet {
     // インストール
     virtual void install(dear::application *app) override;
 
+    // 背景色の描画
+    void render_background_color();
+
     // 背景画像の描画
     void render_background_image();
     
@@ -35,6 +38,15 @@ class background : public dear::applet {
     // UV
     ImVec2 _custom_uv0 { 0.f, 0.f };
     ImVec2 _custom_uv1 { 1.f, 1.f };
+
+    // 背景色
+    ImColor _color_top_left { 0, 0, 0 };
+    ImColor _color_top_right { 0, 0, 0 };
+    ImColor _color_bottom_left { 0, 0, 0 };
+    ImColor _color_bottom_right { 0, 0, 0 };
+    
+    // マルチカラー
+    bool _multi_color = false;
 
 public:
     // 背景画像の読み込み
