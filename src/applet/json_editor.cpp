@@ -63,50 +63,44 @@ void patch_remove(nlohmann::json &json, const nlohmann::json::json_pointer &poin
 
 namespace applet {
 
-void json_editor::install(dear::application *app) {
-    app->add_frame_callback(std::bind(&json_editor::frame, this, std::placeholders::_1));
-
-    _json = nlohmann::json::object();
+int json_editor::pre_begin() {
+    ImGui::SetNextWindowSize(ImVec2(480, 640), ImGuiCond_FirstUseEver);
+    return ImGuiWindowFlags_MenuBar;
 }
 
-void json_editor::frame(double delta_time) {
-    ImGui::PushID(this);
-    ImGui::SetNextWindowSize(ImVec2(480, 640), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(name(), nullptr, ImGuiWindowFlags_MenuBar)) {
-        menubar();
+void json_editor::content(double delta_time) {
+    menubar();
 
-        if (_filename.empty()) {
-            ImGui::Text("untitled.json");
+    if (_filename.empty()) {
+        ImGui::Text("untitled.json");
 
-        } else {
-            ImGui::Text("%s", _filename.c_str());
-        }
-        ImGui::Separator();
-        if (ImGui::BeginChild("json", ImVec2(-1, -1))) {
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2,2));
-            ImGui::Columns(2);
-            if (auto act = property("<ROOT>", _json, nlohmann::json::json_pointer()); act && !_current_action) {
-                _current_action = act;
-            }
-            ImGui::Columns(1);
-            ImGui::PopStyleVar();
-        }
-        ImGui::EndChild();
-
-        if (_current_action) {
-            apply_action();
-        }
-
-        if (auto maybe_path = popup_file_dialog("Open File##json_editor")) {
-            open_file(*maybe_path);
-        }
-
-        if (auto maybe_path = popup_file_dialog("Save File##json_editor")) {
-            save_file(*maybe_path);
-        }
+    } else {
+        ImGui::Text("%s", _filename.c_str());
     }
-    ImGui::End();
-    ImGui::PopID();
+    ImGui::Separator();
+
+    if (ImGui::BeginChild("json", ImVec2(-1, -1))) {
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2,2));
+        ImGui::Columns(2);
+        if (auto act = property("<ROOT>", _json, nlohmann::json::json_pointer()); act && !_current_action) {
+            _current_action = act;
+        }
+        ImGui::Columns(1);
+        ImGui::PopStyleVar();
+    }
+    ImGui::EndChild();
+
+    if (_current_action) {
+        apply_action();
+    }
+
+    if (auto maybe_path = popup_file_dialog("Open File##json_editor")) {
+        open_file(*maybe_path);
+    }
+
+    if (auto maybe_path = popup_file_dialog("Save File##json_editor")) {
+        save_file(*maybe_path);
+    }
 }
 
 void json_editor::menubar() {
@@ -131,6 +125,10 @@ void json_editor::menubar() {
         }
         if (ImGui::MenuItem("Save As...")) {
             command = menu_command::save_as;
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Quit")) {
+            close();
         }
         ImGui::EndMenu();
     }

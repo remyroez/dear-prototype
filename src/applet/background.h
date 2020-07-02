@@ -6,13 +6,13 @@
 namespace applet {
 
 class background : public dear::applet {
-    // 名前
-    virtual const char *name() override {
-        return "background";
-    }
+    DEAR_APPLET_NOWIN("Background");
 
     // インストール
     virtual void install(dear::application *app) override;
+    
+    // 設定
+    virtual void settings() override;
 
     // 背景画像
     dear::image _image;

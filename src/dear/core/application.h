@@ -1,6 +1,7 @@
 #ifndef DEAR_CORE_APPLICATION_H_
 #define DEAR_CORE_APPLICATION_H_
 
+#include <string>
 #include <vector>
 #include <memory>
 #include <functional>
@@ -26,6 +27,9 @@ public:
 
     // シャットダウン
     void shutdown();
+
+    // 終了させる
+    void quit();
 
     // 初期設定コールバック
     void configure_cb(sapp_desc &desc);
@@ -62,7 +66,7 @@ public:
     // アプレット登録
     template <class T, class ...Args>
     inline applet_handle make_applet(Args &&...args) {
-        return _applets.emplace_back(std::make_shared<T>(std::forward(args)...));
+        return _applets.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
     }
 
     // 初期化関数型
@@ -107,8 +111,24 @@ public:
     // エラーコールバックの追加
     void add_fail_callback(fail_fn fn) { _fail_callbacks.emplace_back(fn); }
 
-    // アプレットを返す
+    // アプレットリストを返す
     auto &get_applets() const { return _applets; }
+
+    // アプレットを返す
+    auto get_applet(const std::string &id) {
+        for (auto &applet : _applets) {
+            if (applet->name() == id) {
+                return applet;
+            }
+        }
+        return std::shared_ptr<applet>();
+    }
+
+    // アプレットを返す（テンプレート）
+    template <class T>
+    auto get_applet() {
+        return std::static_pointer_cast<T>(get_applet(T::id));
+    }
 
     // メインメニューを持つかどうか返す
     bool has_mainmenu() const { return _mainmenu_callbacks.size() > 0; }
