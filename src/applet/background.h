@@ -1,6 +1,8 @@
 #ifndef APPLET_BACKGROUND_H_
 #define APPLET_BACKGROUND_H_
 
+#include <string>
+
 #include "dear.h"
 
 namespace applet {
@@ -22,6 +24,9 @@ class background : public dear::applet {
     
     // 設定
     virtual void settings() override;
+
+    // ファイルパス
+    std::string _filepath;
 
     // 背景画像
     dear::image _image;

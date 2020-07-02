@@ -1,6 +1,10 @@
 
 #include "background.h"
 
+#include <filesystem>
+
+#include "misc/cpp/imgui_stdlib.h"
+
 namespace applet {
 
 void background::install(dear::application *app) {
@@ -116,6 +120,11 @@ void background::settings() {
             ImGui::Image(_image, rect, uv0, uv1, _image_color, ImColor(IM_COL32_WHITE));
         }
 
+        // 画像の読み込み
+        if (ImGui::InputTextWithHint("image", "(.png)", &_filepath, ImGuiInputTextFlags_EnterReturnsTrue)) {
+            load_background_image(_filepath.c_str());
+        }
+
         // 背景画像色
         ImGui::ColorEdit4("color", (float*)&_image_color);
         ImGui::Spacing();
@@ -141,7 +150,10 @@ void background::settings() {
 }
 
 void background::load_background_image(const char *filename) {
-    dear::gfx::load_image_async(filename, _image);
+    if (std::filesystem::exists(filename)) {
+        dear::gfx::load_image_async(filename, _image);
+        _filepath = filename;
+    }
 }
 
 } // namespace applet
