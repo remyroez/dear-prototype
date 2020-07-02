@@ -39,40 +39,50 @@ void background::render_background_image() {
 
     if (auto *drawlist = ImGui::GetBackgroundDrawList()) {
         // ＵＶ計算
-        ImVec2 uv0(0.f, 0.f);
-        ImVec2 uv1(1.f, 1.f);
+        ImVec2 uv0, uv1;
         auto rect = drawlist->GetClipRectMax();
-        switch (_size) {
-        case background_size::fixed:
-            dear::gfx::calc_uvs_fixed(
-                _image.width, _image.height, rect.x, rect.y, uv0, uv1
-            );
-            break;
-        case background_size::fit:
-            break;
-        case background_size::cover:
-            dear::gfx::calc_uvs_cover(
-                _image.width, _image.height, rect.x, rect.y, uv0, uv1
-            );
-            break;
-        case background_size::contain:
-            dear::gfx::calc_uvs_contain(
-                _image.width, _image.height, rect.x, rect.y, uv0, uv1
-            );
-            break;
-        case background_size::custom:
-            uv0 = _custom_uv0;
-            uv1 = _custom_uv1;
-            break;
-        }
+        calc_image_uv(rect, uv0, uv1);
 
         // 画像描画
         drawlist->AddImage(
             _image,
             drawlist->GetClipRectMin(),
             rect,
-            uv0, uv1
+            uv0, uv1,
+            _image_color
         );
+    }
+}
+
+void background::calc_image_uv(const ImVec2 &rect, ImVec2 &uv0, ImVec2 &uv1) {
+    switch (_size) {
+    case background_size::fixed:
+        dear::gfx::calc_uvs_fixed(
+            _image.width, _image.height, rect.x, rect.y, uv0, uv1
+        );
+        break;
+
+    case background_size::fit:
+        uv0 = ImVec2(0.f, 0.f);
+        uv1 = ImVec2(1.f, 1.f);
+        break;
+
+    case background_size::cover:
+        dear::gfx::calc_uvs_cover(
+            _image.width, _image.height, rect.x, rect.y, uv0, uv1
+        );
+        break;
+
+    case background_size::contain:
+        dear::gfx::calc_uvs_contain(
+            _image.width, _image.height, rect.x, rect.y, uv0, uv1
+        );
+        break;
+
+    case background_size::custom:
+        uv0 = _custom_uv0;
+        uv1 = _custom_uv1;
+        break;
     }
 }
 
@@ -88,7 +98,27 @@ void background::settings() {
         } else {
             ImGui::ColorEdit3("color###top left", (float*)&_color_top_left);
         }
-        ImGui::NewLine();
+        ImGui::Spacing();
+    }
+    
+    if (ImGui::CollapsingHeader("background image", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // 背景画像サンプル
+        ImVec2 uv0, uv1;
+        {
+            ImVec2 rect(ImGui::GetFrameHeight() * 4, ImGui::GetFrameHeight() * 3);
+            calc_image_uv(rect, uv0, uv1);
+            ImGui::Image(_image, rect, uv0, uv1, _image_color, ImColor(IM_COL32_WHITE));
+        }
+        ImGui::SameLine();
+        {
+            ImVec2 rect(ImGui::GetFrameHeight() * 3, ImGui::GetFrameHeight() * 4);
+            calc_image_uv(rect, uv0, uv1);
+            ImGui::Image(_image, rect, uv0, uv1, _image_color, ImColor(IM_COL32_WHITE));
+        }
+
+        // 背景画像色
+        ImGui::ColorEdit4("color", (float*)&_image_color);
+        ImGui::Spacing();
     }
     
     if (ImGui::CollapsingHeader("background size", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -97,7 +127,7 @@ void background::settings() {
         if (ImGui::RadioButton("cover", _size == background_size::cover)) _size = background_size::cover;
         if (ImGui::RadioButton("contain", _size == background_size::contain)) _size = background_size::contain;
         if (ImGui::RadioButton("custom", _size == background_size::custom)) _size = background_size::custom;
-        ImGui::NewLine();
+        ImGui::Spacing();
     }
 
     if (ImGui::CollapsingHeader("custom uv", ImGuiTreeNodeFlags_DefaultOpen)) {
