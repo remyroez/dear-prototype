@@ -25,6 +25,10 @@ class background : public dear::applet {
     // 設定
     virtual void settings() override;
 
+    // 使用するかどうか
+    bool _enable_color = true;
+    bool _enable_image = true;
+
     // ファイルパス
     std::string _filepath;
 

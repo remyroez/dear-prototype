@@ -9,8 +9,8 @@ namespace applet {
 
 void background::install(dear::application *app) {
     app->add_background_callback([this](auto) {
-        render_background_color();
-        render_background_image();
+        if (_enable_color) render_background_color();
+        if (_enable_image) render_background_image();
     });
 }
 
@@ -91,7 +91,11 @@ void background::calc_image_uv(const ImVec2 &rect, ImVec2 &uv0, ImVec2 &uv1) {
 }
 
 void background::settings() {
+    // 背景色
     if (ImGui::CollapsingHeader("background color", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // 有効フラグ
+        ImGui::Checkbox("enable##color", &_enable_color);
+
         ImGui::Checkbox("multi color", &_multi_color);
         if (_multi_color) {
             ImGui::ColorEdit3("top left", (float*)&_color_top_left);
@@ -105,7 +109,11 @@ void background::settings() {
         ImGui::Spacing();
     }
     
+    // 背景画像
     if (ImGui::CollapsingHeader("background image", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // 有効フラグ
+        ImGui::Checkbox("enable##image", &_enable_image);
+
         // 背景画像サンプル
         ImVec2 uv0, uv1;
         {
@@ -127,25 +135,29 @@ void background::settings() {
 
         // 背景画像色
         ImGui::ColorEdit4("color", (float*)&_image_color);
-        ImGui::Spacing();
-    }
-    
-    if (ImGui::CollapsingHeader("background size", ImGuiTreeNodeFlags_DefaultOpen)) {
-        if (ImGui::RadioButton("fixed", _size == background_size::fixed)) _size = background_size::fixed;
-        if (ImGui::RadioButton("fit", _size == background_size::fit)) _size = background_size::fit;
-        if (ImGui::RadioButton("cover", _size == background_size::cover)) _size = background_size::cover;
-        if (ImGui::RadioButton("contain", _size == background_size::contain)) _size = background_size::contain;
-        if (ImGui::RadioButton("custom", _size == background_size::custom)) _size = background_size::custom;
-        ImGui::Spacing();
-    }
 
-    if (ImGui::CollapsingHeader("custom uv", ImGuiTreeNodeFlags_DefaultOpen)) {
-        auto edited = false;
-        edited = ImGui::InputFloat2("uv0", &_custom_uv0.x) || edited;
-        edited = ImGui::InputFloat2("uv1", &_custom_uv1.x) || edited;
-        if (edited) {
-            _size = background_size::custom;
+        // 背景画像サイズ
+        auto list_size = ImVec2(ImGui::CalcItemWidth(), ImGui::GetTextLineHeightWithSpacing() * 5 + ImGui::GetStyle().FramePadding.y);
+        if (ImGui::ListBoxHeader("size", list_size)) {
+            if (ImGui::Selectable("fixed", _size == background_size::fixed)) _size = background_size::fixed;
+            if (ImGui::Selectable("fit", _size == background_size::fit)) _size = background_size::fit;
+            if (ImGui::Selectable("cover", _size == background_size::cover)) _size = background_size::cover;
+            if (ImGui::Selectable("contain", _size == background_size::contain)) _size = background_size::contain;
+            if (ImGui::Selectable("custom", _size == background_size::custom)) _size = background_size::custom;
+            ImGui::ListBoxFooter();
         }
+
+        // カスタムＵＶ
+        {
+            auto edited = false;
+            edited = ImGui::InputFloat2("custom uv0", &_custom_uv0.x) || edited;
+            edited = ImGui::InputFloat2("custom uv1", &_custom_uv1.x) || edited;
+            if (edited) {
+                _size = background_size::custom;
+            }
+        }
+
+        ImGui::Spacing();
     }
 }
 
