@@ -5,26 +5,51 @@ namespace applet {
 
 void background::install(dear::application *app) {
     app->add_background_callback([this](auto) {
-        if (!_image) return;
+        // 背景画像
+        render_background_image();
+    });
+}
 
+void background::render_background_image() {
+    if (!_image) return;
+
+    if (auto *drawlist = ImGui::GetBackgroundDrawList()) {
+        // ＵＶ計算
+        ImVec2 uv0(0.f, 0.f);
+        ImVec2 uv1(1.f, 1.f);
+        auto rect = drawlist->GetClipRectMax();
         switch (_size) {
         case background_size::fixed:
-            dear::gfx::render_image_fixed(_image, ImGui::GetWindowSize());
+            dear::gfx::calc_uvs_fixed(
+                _image.width, _image.height, rect.x, rect.y, uv0, uv1
+            );
             break;
         case background_size::fit:
-            ImGui::Image(_image, ImGui::GetWindowSize());
             break;
         case background_size::cover:
-            dear::gfx::render_image_cover(_image, ImGui::GetWindowSize());
+            dear::gfx::calc_uvs_cover(
+                _image.width, _image.height, rect.x, rect.y, uv0, uv1
+            );
             break;
         case background_size::contain:
-            dear::gfx::render_image_contain(_image, ImGui::GetWindowSize());
+            dear::gfx::calc_uvs_contain(
+                _image.width, _image.height, rect.x, rect.y, uv0, uv1
+            );
             break;
         case background_size::custom:
-            ImGui::Image(_image, ImGui::GetWindowSize(), _custom_uv0, _custom_uv1);
+            uv0 = _custom_uv0;
+            uv1 = _custom_uv1;
             break;
         }
-    });
+
+        // 画像描画
+        drawlist->AddImage(
+            _image,
+            drawlist->GetClipRectMin(),
+            rect,
+            uv0, uv1
+        );
+    }
 }
 
 void background::settings() {

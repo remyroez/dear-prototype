@@ -10,6 +10,9 @@ class background : public dear::applet {
 
     // インストール
     virtual void install(dear::application *app) override;
+
+    // 背景画像の描画
+    void render_background_image();
     
     // 設定
     virtual void settings() override;
