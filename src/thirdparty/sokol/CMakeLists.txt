@@ -1,6 +1,6 @@
 
-target_include_directories(dear PRIVATE .)
-target_include_directories(dear PRIVATE util)
+target_include_directories(dear PUBLIC .)
+target_include_directories(dear PUBLIC util)
 
 target_sources(dear PRIVATE
     sokol.cpp

@@ -135,7 +135,7 @@ public:
 
 protected:
     // 初期設定
-    virtual void configure(sapp_desc &desc) {}
+    virtual void configure(sapp_desc &desc);
 
     // 初期設定 (imgui)
     virtual void configure_imgui(simgui_desc_t &desc) {}
@@ -154,6 +154,13 @@ protected:
 
     // エラー
     virtual void fail(const char *message) {}
+
+protected:
+    // 標準メニューの追加
+    void add_standard_menus();
+
+    // 標準アプレットの作成
+    void make_standard_applets();
 
 private:
     // 前回の時間

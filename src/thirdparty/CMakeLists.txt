@@ -1,5 +1,5 @@
 
-target_include_directories(dear PRIVATE .)
+target_include_directories(dear PUBLIC .)
 
 add_subdirectory(imgui)
 add_subdirectory(nlohmann)

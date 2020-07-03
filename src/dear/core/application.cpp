@@ -6,9 +6,13 @@
 #include "sokol_glue.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
+
+#include "applet_setting.h"
+#include "imgui_demo.h"
 
 namespace {
 
@@ -175,6 +179,11 @@ void application::init_cb() {
     for (auto &callback : _init_callbacks) {
         callback();
     }
+
+    // アプレットコールバック
+    for (auto &applet : _applets) {
+        applet->init();
+    }
 }
 
 void application::mainmenu_cb(double delta_time) {
@@ -221,7 +230,7 @@ void application::frame_cb() {
 
     // アプレットコールバック
     for (auto &applet : _applets) {
-        if (applet->opened()) applet->frame(delta_time);
+        applet->frame(delta_time);
     }
 
     // 画面クリア
@@ -280,6 +289,36 @@ void application::fail_cb(const char *message) {
 
     // ユーザーコールバック
     fail(message);
+}
+
+void application::configure(sapp_desc &desc) {
+    add_standard_menus();
+    make_standard_applets();
+}
+
+void application::add_standard_menus() {
+    add_mainmenu_callback([this](auto){
+        if (ImGui::BeginMenu("dear##dear_core_application")) {
+            for (auto &applet : get_applets()) {
+                if (!applet->has_window()) {
+                    // ウィンドウがないのでスキップ
+
+                } else if (ImGui::MenuItem(applet->name(), nullptr, applet->opened())) {
+                    applet->toggle();
+                }
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Quit")) {
+                quit();
+            }
+            ImGui::EndMenu();
+        }
+    });
+}
+
+void application::make_standard_applets() {
+    make_applet<applet_setting>();
+    make_applet<imgui_demo>();
 }
 
 } // namespace dear::core

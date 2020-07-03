@@ -1,2 +1,2 @@
 
-target_include_directories(dear PRIVATE .)
+target_include_directories(dear PUBLIC .)

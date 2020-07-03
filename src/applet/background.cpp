@@ -3,6 +3,7 @@
 
 #include <filesystem>
 
+#include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 
 namespace applet {
@@ -115,18 +116,15 @@ void background::settings() {
         ImGui::Checkbox("enable##image", &_enable_image);
 
         // 背景画像サンプル
-        const auto border = ImGui::GetStyleColorVec4(ImGuiCol_Border);
-        ImVec2 uv0, uv1;
         {
             ImVec2 rect(ImGui::GetFrameHeight() * 4, ImGui::GetFrameHeight() * 3);
+            if (auto viewport = ImGui::GetMainViewport()) {
+                rect = viewport->Size;
+            }
+            ImVec2 uv0, uv1;
             calc_image_uv(rect, uv0, uv1);
-            ImGui::Image(_image, rect, uv0, uv1, _image_color, border);
-        }
-        ImGui::SameLine();
-        {
-            ImVec2 rect(ImGui::GetFrameHeight() * 3, ImGui::GetFrameHeight() * 4);
-            calc_image_uv(rect, uv0, uv1);
-            ImGui::Image(_image, rect, uv0, uv1, _image_color, border);
+            rect.x /= 8.f; rect.y /= 8.f;
+            ImGui::Image(_image, rect, uv0, uv1, _image_color, ImGui::GetStyleColorVec4(ImGuiCol_Border));
         }
 
         // 画像の読み込み

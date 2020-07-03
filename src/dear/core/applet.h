@@ -28,7 +28,7 @@ public:
     virtual void uninstall(application *app) {}
 
     // 設定
-    virtual void settings() {}
+    virtual void settings();
 
     // ウィンドウを開く
     virtual void open() { _opened = true; }
@@ -57,7 +57,7 @@ public:
 
     // フレーム経過
     virtual void frame(double delta_time) {
-        if (!has_window()) return;
+        if (!has_window() || !opened()) return;
 
         auto flags = pre_begin();
         if (begin(flags)) {
