@@ -49,10 +49,22 @@ class imgui_demo : public applet {
 
 public:
     // 各ウィンドウ表示フラグを設定する
-    void open_demo(bool b = true) { _open_demo = b; }
-    void open_metrics(bool b = true) { _open_metrics = b; }
-    void open_style(bool b = true) { _open_style = b; }
-    void open_about(bool b = true) { _open_about = b; }
+    void open_demo(bool b) { _open_demo = b; }
+    void open_metrics(bool b) { _open_metrics = b; }
+    void open_style(bool b) { _open_style = b; }
+    void open_about(bool b) { _open_about = b; }
+
+    // 各ウィンドウ表示フラグを返す
+    bool open_demo() const { return _open_demo; }
+    bool open_metrics() const { return _open_metrics; }
+    bool open_style() const { return _open_style; }
+    bool open_about() const { return _open_about; }
+
+    // 各ウィンドウ表示フラグを切り替える
+    void toggle_demo() { _open_demo = !_open_demo; }
+    void toggle_metrics() { _open_metrics = !_open_metrics; }
+    void toggle_style() { _open_style = !_open_style; }
+    void toggle_about() { _open_about = !_open_about; }
 };
 
 } // namespace dear::core
