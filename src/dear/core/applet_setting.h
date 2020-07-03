@@ -77,7 +77,7 @@ class applet_setting : public applet {
                 applet = applets[_selected].get();
             }
             if (applet) {
-                ImGui::Text("%s", applet->name());
+                ImGui::TextUnformatted(applet->name(), ImGui::FindRenderedTextEnd(applet->name()));
 
             } else {
                 ImGui::TextDisabled("(no select)");
