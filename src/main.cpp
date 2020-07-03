@@ -101,7 +101,12 @@ class application : public dear::application {
 
     // 初期化
     virtual void init() override {
+#if 1
         dear::gfx::load_font("NotoSansCJKjp-Regular.otf", 16);
+#else
+        dear::gfx::load_font("PxPlus_IBM_BIOS.ttf", 8);
+        dear::gfx::merge_font("misaki_gothic_2nd.ttf", 8);
+#endif
         dear::gfx::build_font();
 
         dear::gfx::load_image_async("avatar.png", _image);
