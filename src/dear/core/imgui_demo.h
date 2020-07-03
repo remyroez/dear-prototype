@@ -2,6 +2,7 @@
 #define DEAR_CORE_IMGUI_DEMO_H_
 
 #include "applet.h"
+#include "application.h"
 
 #include "imgui.h"
 
