@@ -9,7 +9,7 @@
 namespace dear::core {
 
 class imgui_demo : public applet {
-    DEAR_APPLET("Dear ImGui Demo##dear_core");
+    DEAR_APPLET_NOWIN("Dear ImGui Demo##dear_core");
 
     // コンストラクタ
     imgui_demo(bool open_demo, bool open_metrics, bool open_style, bool open_about)
