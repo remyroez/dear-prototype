@@ -14,7 +14,7 @@ class applet_setting : public applet {
     // ウィンドウを開く
     virtual void open() override {
         applet::open();
-        _selected = -1;
+        _selected = 0;
     }
 
     // ウィンドウ前処理
@@ -94,7 +94,7 @@ class applet_setting : public applet {
     }
 
     // 選択
-    int _selected = -1;
+    int _selected = 0;
 };
 
 } // namespace dear::core

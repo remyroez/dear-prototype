@@ -48,7 +48,7 @@ class background : public dear::applet {
     };
 
     // 背景サイズ
-    background_size _size = background_size::fixed;
+    background_size _size = background_size::cover;
 
     // UV
     ImVec2 _custom_uv0 { 0.f, 0.f };

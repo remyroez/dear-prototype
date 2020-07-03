@@ -68,9 +68,11 @@ class application : public dear::application {
         // 標準メインメニュー，アプレットを追加する
         dear::application::configure(desc);
 
+        // アプリケーション設定
         desc.enable_clipboard = true;
         desc.clipboard_size = 1024 * 1024;
 
+        // 画像表示テスト
         add_frame_callback([this](auto){
             ImGui::SetNextWindowPos(ImVec2(100, 300), ImGuiCond_FirstUseEver);
             if (ImGui::Begin("image")) {
@@ -89,9 +91,10 @@ class application : public dear::application {
             ImGui::End();
         });
 
-        make_applet<example_applet>(true);
+        // アプレットの生成
         make_applet<applet::background>();
         make_applet<applet::json_editor>();
+        make_applet<example_applet>(true);
     }
 
     // 初期設定 (imgui)

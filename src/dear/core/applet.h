@@ -28,7 +28,7 @@ public:
     virtual void uninstall(application *app) {}
 
     // 設定
-    virtual void settings() {}
+    virtual void settings();
 
     // ウィンドウを開く
     virtual void open() { _opened = true; }
