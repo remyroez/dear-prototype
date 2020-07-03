@@ -115,17 +115,18 @@ void background::settings() {
         ImGui::Checkbox("enable##image", &_enable_image);
 
         // 背景画像サンプル
+        const auto border = ImGui::GetStyleColorVec4(ImGuiCol_Border);
         ImVec2 uv0, uv1;
         {
             ImVec2 rect(ImGui::GetFrameHeight() * 4, ImGui::GetFrameHeight() * 3);
             calc_image_uv(rect, uv0, uv1);
-            ImGui::Image(_image, rect, uv0, uv1, _image_color, ImColor(IM_COL32_WHITE));
+            ImGui::Image(_image, rect, uv0, uv1, _image_color, border);
         }
         ImGui::SameLine();
         {
             ImVec2 rect(ImGui::GetFrameHeight() * 3, ImGui::GetFrameHeight() * 4);
             calc_image_uv(rect, uv0, uv1);
-            ImGui::Image(_image, rect, uv0, uv1, _image_color, ImColor(IM_COL32_WHITE));
+            ImGui::Image(_image, rect, uv0, uv1, _image_color, border);
         }
 
         // 画像の読み込み
