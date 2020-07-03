@@ -1,6 +1,8 @@
 #ifndef APPLET_BACKGROUND_H_
 #define APPLET_BACKGROUND_H_
 
+#include <string>
+
 #include "dear.h"
 
 namespace applet {
@@ -10,12 +12,31 @@ class background : public dear::applet {
 
     // インストール
     virtual void install(dear::application *app) override;
+
+    // 背景色の描画
+    void render_background_color();
+
+    // 背景画像の描画
+    void render_background_image();
+
+    // 背景画像のＵＶ計算
+    void calc_image_uv(const ImVec2 &rect, ImVec2 &uv0, ImVec2 &uv1);
     
     // 設定
     virtual void settings() override;
 
+    // 使用するかどうか
+    bool _enable_color = true;
+    bool _enable_image = true;
+
+    // ファイルパス
+    std::string _filepath;
+
     // 背景画像
     dear::image _image;
+
+    // 画像色
+    ImColor _image_color { IM_COL32_WHITE };
 
     // 背景サイズ列挙型
     enum background_size {
@@ -32,6 +53,15 @@ class background : public dear::applet {
     // UV
     ImVec2 _custom_uv0 { 0.f, 0.f };
     ImVec2 _custom_uv1 { 1.f, 1.f };
+
+    // 背景色
+    ImColor _color_top_left { IM_COL32_BLACK };
+    ImColor _color_top_right { IM_COL32_BLACK };
+    ImColor _color_bottom_left { IM_COL32_BLACK };
+    ImColor _color_bottom_right { IM_COL32_BLACK };
+
+    // マルチカラー
+    bool _multi_color = false;
 
 public:
     // 背景画像の読み込み

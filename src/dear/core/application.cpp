@@ -136,8 +136,8 @@ void application::configure_cb(sapp_desc &desc) {
     // 初期カラー
     _pass_action.colors[0].action = SG_ACTION_CLEAR;
     _pass_action.colors[0].val[0] = 0.0f;
-    _pass_action.colors[0].val[1] = 0.5f;
-    _pass_action.colors[0].val[2] = 0.7f;
+    _pass_action.colors[0].val[1] = 0.0f;
+    _pass_action.colors[0].val[2] = 0.0f;
     _pass_action.colors[0].val[3] = 1.0f;
 
     // ユーザーコールバック
