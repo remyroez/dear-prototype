@@ -3,6 +3,8 @@
 
 #include "core/application.h"
 #include "core/applet.h"
+#include "core/applet_setting.h"
+#include "core/imgui_demo.h"
 
 #include "gfx/image.h"
 #include "gfx/font.h"

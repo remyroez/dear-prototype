@@ -12,6 +12,7 @@
 #include "sokol_imgui.h"
 
 #include "applet_setting.h"
+#include "imgui_demo.h"
 
 namespace {
 
@@ -178,6 +179,11 @@ void application::init_cb() {
     for (auto &callback : _init_callbacks) {
         callback();
     }
+
+    // アプレットコールバック
+    for (auto &applet : _applets) {
+        applet->init();
+    }
 }
 
 void application::mainmenu_cb(double delta_time) {
@@ -224,7 +230,7 @@ void application::frame_cb() {
 
     // アプレットコールバック
     for (auto &applet : _applets) {
-        if (applet->opened()) applet->frame(delta_time);
+        applet->frame(delta_time);
     }
 
     // 画面クリア
@@ -312,6 +318,7 @@ void application::add_standard_menus() {
 
 void application::make_standard_applets() {
     make_applet<applet_setting>();
+    make_applet<imgui_demo>();
 }
 
 } // namespace dear::core

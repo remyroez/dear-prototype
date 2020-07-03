@@ -1,11 +1,14 @@
 #ifndef DEAR_CORE_APPLET_SETTING_H_
 #define DEAR_CORE_APPLET_SETTING_H_
 
-#include "dear.h"
+#include "applet.h"
+
+#include "imgui.h"
+#include "imgui_internal.h"
 
 namespace dear::core {
 
-class applet_setting : public dear::applet {
+class applet_setting : public applet {
     DEAR_APPLET("Applet Setting##dear_core");
     
     // ウィンドウを開く
@@ -63,7 +66,7 @@ class applet_setting : public dear::applet {
 
         // アプレット設定
         if (ImGui::BeginChild("right", ImVec2(-1, -1), false, ImGuiWindowFlags_NoScrollbar)) {
-            dear::applet *applet = nullptr;
+            dear::core::applet *applet = nullptr;
             if (_selected < 0) {
                 // 選択したインデックスが不正
 
