@@ -8,6 +8,8 @@ target_compile_features(dear PRIVATE cxx_std_17)
 target_include_directories(dear PRIVATE include)
 target_link_directories(dear PRIVATE lib)
 
+option(DEAR_BUILD_EXAMPLE ON)
+
 if(WIN32)
   # TODO
 elseif(ANDROID)
@@ -27,6 +29,10 @@ if (MSVC)
 endif()
 
 add_subdirectory(src)
+
+if(DEAR_BUILD_EXAMPLE)
+  add_subdirectory(example)
+endif()
 
 get_property("TARGET_SOURCE_FILES" TARGET dear PROPERTY SOURCES)
 source_group(TREE "${CMAKE_CURRENT_LIST_DIR}" FILES ${TARGET_SOURCE_FILES})

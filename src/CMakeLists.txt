@@ -1,6 +1,5 @@
-target_sources(dear PRIVATE
-    main.cpp
-)
+
+target_include_directories(dear PRIVATE .)
 
 add_subdirectory(applet)
 add_subdirectory(dear)
